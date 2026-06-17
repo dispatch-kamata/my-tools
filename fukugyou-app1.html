@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="副業管理">
+<link rel="apple-touch-icon" href="fukugyou-icon.png">
+<link rel="icon" type="image/png" href="fukugyou-icon.png">
+<title>副業管理アプリ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#f0f2f7;--surface:#fff;--surface2:#e8ecf5;
+  --accent:#2563eb;--accent2:#ea6c00;--green:#16a34a;--red:#dc2626;
+  --text:#1a1d2e;--muted:#6b7280;--border:#d1d5e0;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px;}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px 0;position:sticky;top:0;z-index:100;}
+.app-title{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px;}
+.tabs{display:flex;}
+.tab{flex:1;padding:10px 6px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.page{display:none;padding:14px;}
+.page.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.card-title{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px;}
+.month-bar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;}
+.month-label{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;}
+.month-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;}
+.summary-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.summary-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
+.summary-box .val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--green);display:block;}
+.summary-box .lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.form-label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:15px;font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;margin-bottom:10px;box-sizing:border-box;}
+.form-input:focus{outline:none;border-color:var(--accent);}
+textarea.form-input{resize:vertical;min-height:52px;}
+.selected-display{background:var(--surface2);border:2px solid var(--accent);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between;}
+.selected-display.visible{display:flex;}
+.selected-name{font-size:14px;font-weight:600;color:var(--accent);}
+.clear-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+.parent-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.parent-chip{background:var(--surface2);border:1.5px solid var(--border);border-radius:18px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text);white-space:nowrap;font-family:'Noto Sans JP',sans-serif;}
+.parent-chip.has-sub::after{content:' ›';color:var(--muted);}
+.parent-chip.new-chip{border-style:dashed;color:var(--accent2);border-color:var(--accent2);}
+.price-toggle{display:flex;gap:7px;margin-bottom:10px;}
+.price-btn{flex:1;padding:11px;border-radius:9px;border:2px solid var(--border);background:var(--surface2);color:var(--muted);font-size:15px;font-weight:700;font-family:'DM Mono',monospace;cursor:pointer;text-align:center;}
+.price-btn.selected{border-color:var(--accent);background:rgba(37,99,235,.1);color:var(--accent);}
+.btn{width:100%;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-success{background:var(--green);color:#fff;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.backup-row{display:flex;gap:7px;}
+.backup-row>*{flex:1;}
+.import-lbl{display:flex;align-items:center;justify-content:center;padding:13px;border-radius:10px;border:1px solid var(--border);color:var(--muted);font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.backup-banner{display:none;margin:10px 14px 0;padding:12px 14px;background:#fff7ed;border:1.5px solid var(--accent2);border-radius:12px;}
+.backup-banner.show{display:block;}
+.backup-banner .bb-txt{font-size:13px;font-weight:600;color:#9a3412;margin-bottom:8px;line-height:1.5;}
+.backup-banner .bb-btn{width:100%;padding:11px;border:none;border-radius:9px;background:var(--accent2);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;}
+.snap-item{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;}
+.snap-date{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+.snap-restore{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;}
+.lastbk{font-size:11px;color:var(--muted);margin-top:8px;text-align:center;}
+.task-item{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--surface);border-radius:10px;margin-bottom:7px;border:1px solid var(--border);border-left:4px solid var(--accent);}
+.task-item.p4{border-left-color:var(--accent2);}
+.task-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:2px;}
+.task-course{font-size:13px;font-weight:500;}
+.task-price{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;}
+.task-price.c3{color:var(--accent);}.task-price.c4{color:var(--accent2);}
+.task-del{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;margin-left:4px;}
+.sub-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;}
+.sub-overlay.open{display:flex;}
+.sub-box{background:var(--surface);border-radius:20px 20px 0 0;padding:18px 14px 30px;width:100%;max-height:65vh;overflow-y:auto;}
+.sub-title{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;}
+.sub-title strong{color:var(--text);font-size:16px;display:block;margin-top:3px;}
+.sub-list{display:flex;flex-direction:column;gap:7px;}
+.sub-item{background:var(--surface2);border:1.5px solid var(--border);border-radius:11px;padding:12px 14px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:9px;}
+.sub-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.sub-cancel{margin-top:10px;width:100%;padding:12px;border-radius:11px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+.confirm-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.confirm-ov.open{display:flex;}
+.confirm-box{background:var(--surface);border-radius:14px;padding:22px 18px;width:100%;max-width:300px;text-align:center;}
+.confirm-msg{font-size:14px;font-weight:500;margin-bottom:14px;line-height:1.5;}
+.confirm-btns{display:flex;gap:8px;}
+.confirm-btns>*{flex:1;}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#fff;padding:10px 20px;border-radius:20px;font-weight:700;font-size:13px;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:13px;}
+.inv-section{background:#fff;border-radius:var(--radius);padding:16px;margin-bottom:10px;border:1px solid var(--border);}
+.inv-title{font-size:22px;font-weight:700;letter-spacing:7px;text-align:center;border-bottom:2px solid #1a1a2e;padding-bottom:10px;margin-bottom:12px;}
+.inv-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px;}
+.inv-table th{background:#1a1a2e;color:#fff;padding:5px 7px;text-align:left;font-weight:500;}
+.inv-table td{padding:5px 7px;border-bottom:1px solid #eee;color:#333;}
+.inv-table tr:nth-child(even) td{background:#f8f9ff;}
+.flex-row{display:flex;gap:8px;}.flex-row>*{flex:1;}
+
+/* ===== コース管理オーバーレイ ===== */
+.manage-group{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.manage-ghead{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);padding:8px 12px;font-weight:700;font-size:14px;}
+.manage-del-group{background:none;border:1px solid var(--red);color:var(--red);border-radius:7px;font-size:11px;padding:4px 9px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
+.manage-courses{padding:4px 10px;}
+.manage-course{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid var(--border);font-size:13px;}
+.manage-course:last-child{border-bottom:none;}
+.manage-del-course{background:none;border:none;color:var(--red);font-size:22px;cursor:pointer;padding:0 6px;line-height:1;}
+.manage-empty{text-align:center;color:var(--muted);font-size:13px;padding:20px;}
+
+/* ===== 請求書（統合版）スコープCSS ===== */
+#page-invoice{
+  --blue:#1A7FC4;--mid-blue:#2A96D8;--light-blue:#52C8E8;--pale-blue:#D0EAF5;
+  --faint:#F0F7FB;--border:#C0D8E8;--txt:#1A1A2E;--txt-m:#3A3A4A;--txt-l:#7A8A9A;
+  --danger:#e05050;--green:#28a745;
+}
+.iv-tabs{display:flex;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.iv-tab{flex:1;padding:11px 6px;text-align:center;font-size:13px;font-weight:500;color:#7A8A9A;border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;font-family:inherit;}
+.iv-tab.active{color:#1A7FC4;border-bottom-color:#1A7FC4;font-weight:700;}
+.iv-pane{display:none;}
+.iv-pane.active{display:block;}
+#page-invoice .card{background:#fff;border-radius:14px;padding:16px;margin-bottom:10px;border:1px solid var(--border);}
+#page-invoice .card-title{font-size:12px;font-weight:700;color:var(--blue);letter-spacing:0;text-transform:none;font-family:'Noto Sans JP',sans-serif;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+#page-invoice .card-title::before{content:'';display:inline-block;width:3px;height:13px;background:var(--blue);border-radius:2px;}
+#page-invoice .form-group{margin-bottom:11px;}
+#page-invoice .form-label{display:block;font-size:11px;font-weight:600;color:var(--txt-m);margin-bottom:4px;}
+#page-invoice .form-input,#page-invoice .form-select{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:16px;background:#fff;color:var(--txt);-webkit-appearance:none;font-family:inherit;margin-bottom:0;}
+#page-invoice .form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231A7FC4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+#page-invoice .form-input:focus,#page-invoice .form-select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,127,196,.1);}
+#page-invoice .form-row{display:flex;gap:8px;}
+#page-invoice .form-row>.form-group{flex:1;}
+.total-bar{background:#fff;border:2px solid var(--blue);border-radius:14px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-left:5px solid var(--blue);}
+.total-bar .label{color:var(--blue);font-size:13px;font-weight:600;}
+.total-bar .amount{color:var(--txt);font-size:26px;font-weight:700;}
+.item-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);border-left:4px solid var(--blue);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.item-card-left{flex:1;min-width:0;}
+.item-name{font-weight:600;font-size:14px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.item-details{display:flex;gap:10px;font-size:12px;color:var(--txt-m);}
+.item-details .amt{font-weight:700;color:var(--txt);}
+.item-remove{min-width:34px;height:34px;border-radius:50%;border:none;background:var(--danger);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.add-form{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:14px;}
+.add-form.highlight{border-color:var(--blue);border-style:solid;}
+.qty-ctrl{display:flex;align-items:center;border:1px solid var(--border);border-radius:10px;overflow:hidden;height:44px;}
+.qty-btn{width:44px;height:44px;border:none;background:var(--faint);color:var(--blue);font-size:22px;font-weight:600;cursor:pointer;}
+.qty-input{flex:1;border:none;text-align:center;font-size:17px;font-weight:600;color:var(--txt);width:0;min-width:40px;background:#fff;-webkit-appearance:none;}
+.qty-input:focus{outline:none;}
+#page-invoice .btn{display:block;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.5px;font-family:inherit;text-align:center;border:none;}
+#page-invoice .btn-primary{background:#fff;color:var(--blue);border:2px solid var(--blue)!important;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+#page-invoice .btn-outline{background:transparent;color:var(--blue);border:1.5px solid var(--border)!important;}
+.btn-sm{display:inline-block;width:auto;padding:9px 16px;font-size:13px;border-radius:10px;}
+.price-badge{display:inline-block;background:var(--faint);color:var(--blue);border:1px solid var(--pale-blue);border-radius:6px;font-size:12px;font-weight:700;padding:2px 7px;margin-left:4px;}
+.pf{background:#fff;border-radius:10px;padding:18px 14px;font-size:12px;line-height:1.6;border:1px solid var(--border);overflow-x:auto;}
+.pf-hdr{padding:14px;margin:-18px -14px 14px;border-radius:10px 10px 0 0;border-bottom:2px solid var(--blue);border-top:3px solid var(--blue);}
+.pf-hdr h2{font-size:20px;letter-spacing:5px;color:var(--blue);}
+.pf-hdr small{color:var(--mid-blue);font-size:8px;letter-spacing:3px;}
+.pf-total{border:2px solid var(--blue);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin:12px 0;border-left:5px solid var(--blue);}
+.pf-total .lbl{color:var(--blue);font-size:10px;font-weight:600;}
+.pf-total .val{font-size:20px;font-weight:700;color:var(--txt);}
+.pf-tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:11px;border:1px solid var(--blue);}
+.pf-tbl thead{background:var(--faint);}
+.pf-tbl th{padding:6px 8px;font-size:10px;font-weight:700;text-align:left;color:var(--blue);border:1px solid var(--blue);}
+.pf-tbl th:nth-child(n+2){text-align:right;}
+.pf-tbl td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--txt);}
+.pf-tbl td:nth-child(n+2){text-align:right;}
+.pf-bank{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:12px 0;border-left:3px solid var(--blue);font-size:11px;}
+.pf-footer{height:2px;background:var(--blue);margin:16px -14px -18px;border-radius:0 0 10px 10px;}
+.pm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center;padding:20px;}
+.pm-overlay.show{display:flex;}
+.pm-box{background:#fff;border-radius:16px;padding:22px;max-width:360px;width:100%;}
+.pm-title{font-size:16px;font-weight:700;color:#1A7FC4;margin-bottom:14px;}
+.pm-step{background:#F0F7FB;border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;line-height:1.65;border-left:3px solid #1A7FC4;}
+.pm-step strong{color:#1A7FC4;display:block;margin-bottom:2px;}
+.pm-btns{display:flex;gap:10px;margin-top:16px;}
+.saved-msg{color:#28a745;font-size:12px;text-align:center;margin-top:6px;height:18px;transition:opacity .5s;}
+.text-sm{font-size:12px;color:#3A3A4A;}
+.text-center{text-align:center;}
+.mt-8{margin-top:8px;}.mt-12{margin-top:12px;}
+#printArea{display:none;}
+@media print{
+  body>*{display:none!important;}
+  #printArea{display:block!important;margin:0;padding:0;}
+  @page{size:A4;margin:12mm 12mm 15mm 12mm;}
+  body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-title">副業管理アプリ</div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="record">📋 記録</div>
+    <div class="tab" data-tab="list">📊 一覧</div>
+    <div class="tab" data-tab="invoice">🧾 請求書</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="backup-banner" id="bk-banner">
+  <div class="bb-txt">📦 大切なデータを守るため、バックアップ（保存）しましょう。<br>保存先は「ファイル」や「iCloud」がおすすめです。</div>
+  <button class="bb-btn" id="banner-backup-btn">今すぐバックアップする</button>
+</div>
+
+<!-- 記録タブ -->
+<div class="page active" id="page-record">
+  <div class="month-bar">
+    <button class="month-btn" data-delta="-1">‹</button>
+    <span class="month-label" id="ml1"></span>
+    <button class="month-btn" data-delta="1">›</button>
+  </div>
+  <div class="summary-row">
+    <div class="summary-box"><span class="val" id="sc1">0件</span><div class="lbl">件数</div></div>
+    <div class="summary-box"><span class="val" id="sa1">¥0</span><div class="lbl">合計</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">新規タスク追加</div>
+    <label class="form-label">日付</label>
+    <input type="date" class="form-input" id="inp-date">
+    <label class="form-label">コース選択</label>
+    <div class="selected-display" id="sel-disp">
+      <span class="selected-name" id="sel-name"></span>
+      <button class="clear-btn" id="clear-btn">×</button>
+    </div>
+    <div class="parent-grid" id="parent-grid"></div>
+    <label class="form-label">金額</label>
+    <div class="price-toggle">
+      <div class="price-btn selected" data-price="3000">¥3,000</div>
+      <div class="price-btn" data-price="4000">¥4,000</div>
+    </div>
+    <label class="form-label">メモ（任意）</label>
+    <textarea class="form-input" id="inp-memo" placeholder="備考など"></textarea>
+    <button class="btn btn-primary" id="add-btn">＋ 追加する</button>
+  </div>
+</div>
+
+<!-- 一覧タブ -->
+<div class="page" id="page-list">
+  <div class="month-bar">
+    <button class="month-btn" data-delta="-1">‹</button>
+    <span class="month-label" id="ml2"></span>
+    <button class="month-btn" data-delta="1">›</button>
+  </div>
+  <div class="summary-row">
+    <div class="summary-box"><span class="val" id="sc2">0件</span><div class="lbl">件数</div></div>
+    <div class="summary-box"><span class="val" id="sa2">¥0</span><div class="lbl">合計</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">データ管理・バックアップ</div>
+    <div class="backup-row">
+      <button class="btn btn-outline" id="exp-btn">📥 バックアップ保存</button>
+      <label class="import-lbl">📤 ファイルから復元<input type="file" accept=".json" id="imp-input" style="display:none"></label>
+    </div>
+    <button class="btn btn-outline" id="restore-btn" style="margin-top:7px;">⏱ 自動保存から復元する</button>
+    <div class="lastbk" id="lastbk-txt"></div>
+  </div>
+  <div id="task-list"></div>
+</div>
+
+<!-- 請求書タブ -->
+<div class="page" id="page-invoice">
+  <div class="iv-tabs">
+    <button class="iv-tab active" onclick="showTab('edit')">📋 基本情報</button>
+    <button class="iv-tab" onclick="showTab('items')">📦 品目</button>
+    <button class="iv-tab" onclick="showTab('preview')">👁 確認</button>
+  </div>
+
+  <!-- 基本情報 -->
+  <div id="iv-tab-edit" class="iv-pane active">
+    <div class="card">
+      <div class="card-title">請求情報</div>
+      <div class="form-group"><label class="form-label">請求書番号</label><input class="form-input" id="invoiceNumber" value=""></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">請求日</label><input class="form-input" id="invoiceDate" type="date"></div>
+        <div class="form-group"><label class="form-label">お支払期限</label><input class="form-input" id="dueDate" type="date"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">取引先情報</div>
+      <div class="form-group"><label class="form-label">取引先を選択</label>
+        <select class="form-select" id="clientPreset" onchange="applyClientPreset()">
+          <option value="">── 選択してください ──</option>
+          <option value="shindo">進藤運輸倉庫有限会社</option>
+          <option value="custom">手動入力</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">会社名</label><input class="form-input" id="clientName" value="進藤運輸倉庫有限会社"></div>
+      <div class="form-group"><label class="form-label">住所</label><input class="form-input" id="clientAddress" value="福岡県福岡市博多区諸岡3丁目24番1号"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">発行者情報</div>
+      <div class="form-group"><label class="form-label">屋号・会社名</label><input class="form-input" id="issuerName" value="リアル"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">郵便番号</label><input class="form-input" id="issuerZip" value="811-2129"></div>
+        <div class="form-group"><label class="form-label">電話番号</label><input class="form-input" id="issuerTel" value="070-9018-6959"></div>
+      </div>
+      <div class="form-group"><label class="form-label">住所</label><input class="form-input" id="issuerAddress" value="福岡県糟屋郡宇美町神武原1丁目8番15号"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">振込先</div>
+      <div class="form-group"><label class="form-label">銀行名</label><input class="form-input" id="bankName" value="GMOあおぞらネット銀行"></div>
+      <div class="form-group"><label class="form-label">支店・口座番号</label><input class="form-input" id="bankBranch" value="にじ支店（302） 普通3155327"></div>
+      <div class="form-group"><label class="form-label">口座名義</label><input class="form-input" id="bankAccountName" value="ミヤモトトオル"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">備考</div>
+      <div class="form-group"><input class="form-input" id="remarks" value="当方は免税事業者の為、消費税は請求しておりません。"></div>
+    </div>
+    <button class="btn btn-blue mt-8" onclick="showTab('items')">次へ：品目入力 →</button>
+  </div>
+
+  <!-- 品目 -->
+  <div id="iv-tab-items" class="iv-pane">
+    <button class="btn btn-blue" onclick="loadFromRecords()" style="margin-bottom:12px;">📥 「記録」タブの今月分を取り込む</button>
+    <div class="total-bar">
+      <span class="label">ご請求金額</span>
+      <span class="amount" id="totalDisplay">¥0</span>
+    </div>
+    <div id="itemsList"></div>
+    <div class="add-form" id="addForm">
+      <div class="card-title" style="margin-bottom:10px">品目を追加</div>
+      <div class="form-group">
+        <label class="form-label">品目選択（プルダウン）</label>
+        <select class="form-select" id="itemSelect" onchange="onItemSelect()">
+          <option value="">── 品目を選択 ──</option>
+          <optgroup label="博多南ルート ¥3,000">
+            <option value="博多南下5上2|3000">博多南下5上2</option>
+            <option value="博多南下6上3|3000">博多南下6上3</option>
+            <option value="博多南下7上4|3000">博多南下7上4</option>
+            <option value="博多南下8上5|3000">博多南下8上5</option>
+          </optgroup>
+          <optgroup label="博多南ルート ¥4,000">
+            <option value="博多南下4|4000">博多南下4</option>
+            <option value="博多南下10上7|4000">博多南下10上7</option>
+          </optgroup>
+          <optgroup label="福岡ルート ¥3,000">
+            <option value="福岡下9上6|3000">福岡下9上6</option>
+            <option value="福岡南補助2上補助|3000">福岡南補助2上補助</option>
+          </optgroup>
+          <optgroup label="福岡ルート ¥4,000">
+            <option value="福岡西下4上4|4000">福岡西下4上4</option>
+            <option value="福岡南下1|4000">福岡南下1</option>
+          </optgroup>
+          <optgroup label="筑紫・城南ルート ¥3,000">
+            <option value="筑紫下2福南上1|3000">筑紫下2福南上1</option>
+            <option value="筑紫下2福南下1|3000">筑紫下2福南下1</option>
+            <option value="筑紫下1上1|3000">筑紫下1上1</option>
+            <option value="城南下4上2|3000">城南下4上2</option>
+          </optgroup>
+          <optgroup label="和白ルート ¥4,000">
+            <option value="和白下1補助|4000">和白下1補助</option>
+            <option value="和白下2上1|4000">和白下2上1</option>
+            <option value="和白下5上4|4000">和白下5上4</option>
+          </optgroup>
+          <optgroup label="補助・遠方ルート">
+            <option value="直方補助下1上1|3000">直方補助下1上1　¥3,000</option>
+            <option value="前原下3補助上2|3000">前原下3補助上2　¥3,000</option>
+            <option value="城南下補助3博多北上|4000">城南下補助3博多北上　¥4,000</option>
+            <option value="飯塚下1|4000">飯塚下1　¥4,000</option>
+          </optgroup>
+          <optgroup label="手動入力">
+            <option value="__custom__">その他（手動入力）</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group" id="customNameGroup" style="display:none">
+        <label class="form-label">品目名（手動入力）</label>
+        <input class="form-input" id="newItemName" placeholder="品目名を入力">
+      </div>
+      <div class="form-group">
+        <label class="form-label">単価（円）<span class="price-badge" id="priceBadge" style="display:none"></span></label>
+        <select class="form-select" id="priceSelect" onchange="onPriceSelect()">
+          <option value="3000">¥3,000</option>
+          <option value="4000">¥4,000</option>
+          <option value="5000">¥5,000</option>
+          <option value="6000">¥6,000</option>
+          <option value="__custom__">その他（直接入力）</option>
+        </select>
+      </div>
+      <div class="form-group" id="customPriceGroup" style="display:none">
+        <label class="form-label">単価（直接入力）</label>
+        <input class="form-input" id="newItemPrice" type="number" placeholder="例: 3000" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label class="form-label">数量（日数）</label>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty(-1)">－</button>
+          <input class="qty-input" id="newItemQty" type="number" value="1" min="1" inputmode="numeric">
+          <button class="qty-btn" onclick="changeQty(1)">＋</button>
+        </div>
+      </div>
+      <button class="btn btn-green mt-8" onclick="addItem()">＋ この品目を追加</button>
+    </div>
+    <div class="card mt-12" style="padding:12px">
+      <div class="card-title" style="margin-bottom:10px">過去データ読込</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-outline btn-sm" style="width:100%;text-align:center" onclick="loadJanuary()">📄 1月分 ¥198,000</button>
+        <button class="btn btn-outline btn-sm" style="width:100%;text-align:center" onclick="loadFebruary()">📄 2月分 ¥162,000</button>
+        <button class="btn btn-outline btn-sm" style="width:100%;text-align:center" onclick="loadMarch()">📄 3月分 ¥180,000</button>
+        <button class="btn btn-outline btn-sm" style="width:100%;text-align:center" onclick="loadApril()">📄 4月分 ¥169,000</button>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" style="flex:1" onclick="loadSample()">サンプル</button>
+        <button class="btn btn-sm" style="flex:1;background:transparent;color:#e05050;border:1.5px solid #e05050;border-radius:10px;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif" onclick="clearItems()">全削除</button>
+      </div>
+    </div>
+    <div class="mt-12"><button class="btn btn-blue" onclick="showTab('preview')">次へ：プレビュー確認 →</button></div>
+  </div>
+
+  <!-- 確認 -->
+  <div id="iv-tab-preview" class="iv-pane">
+    <div id="previewContent" class="pf"></div>
+    <div class="mt-12"><button class="btn btn-blue" onclick="printInvoice()">🖨 印刷 / PDF保存</button></div>
+    <div class="mt-8"><button class="btn btn-primary btn-sm" style="width:100%" onclick="saveData()">💾 請求書データを保存</button></div>
+    <div class="saved-msg" id="savedMsg"></div>
+    <p class="text-sm text-center mt-8">Safari → 共有ボタン →「PDFを作成」でiPhone保存可</p>
+  </div>
+
+  <!-- 印刷前モーダル -->
+  <div class="pm-overlay" id="pmOverlay">
+    <div class="pm-box">
+      <div class="pm-title">🖨 印刷前の設定確認</div>
+      <div class="pm-step"><strong>📱 iPhone Safari</strong>そのままOKです。ヘッダー・フッターは表示されません。</div>
+      <div class="pm-step"><strong>🖥 Mac Safari</strong>印刷ダイアログが開いたら<br>「ヘッダーとフッターを印刷」の<br>☑ チェックを外してください</div>
+      <div class="pm-step"><strong>🌐 Chrome / Edge</strong>「詳細設定」→「ヘッダーとフッター」の<br>☑ チェックを外してください</div>
+      <div class="pm-btns">
+        <button class="btn btn-outline btn-sm" onclick="closePrintModal()" style="flex:1">キャンセル</button>
+        <button class="btn btn-blue btn-sm" onclick="doPrint()" style="flex:2">印刷する →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 印刷専用エリア -->
+<div id="printArea"></div>
+
+<!-- サブポップアップ -->
+<div class="sub-overlay" id="sub-overlay">
+  <div class="sub-box">
+    <div class="sub-title">コースを選択<strong id="sub-lbl"></strong></div>
+    <div class="sub-list" id="sub-list"></div>
+    <button class="sub-cancel" id="sub-cancel">キャンセル</button>
+  </div>
+</div>
+
+<!-- コース管理 -->
+<div class="sub-overlay" id="manage-overlay">
+  <div class="sub-box">
+    <div class="sub-title">コース管理<strong>削除したい項目の × を押してください</strong></div>
+    <div id="manage-list"></div>
+    <button class="sub-cancel" id="manage-close">閉じる</button>
+  </div>
+</div>
+
+<!-- 自動保存から復元 -->
+<div class="sub-overlay" id="snap-overlay">
+  <div class="sub-box">
+    <div class="sub-title">自動保存から復元<strong>復元したい日時を選んでください</strong></div>
+    <div id="snap-list"></div>
+    <button class="sub-cancel" id="snap-close">閉じる</button>
+  </div>
+</div>
+
+<!-- 削除確認 -->
+<div class="confirm-ov" id="confirm-ov">
+  <div class="confirm-box">
+    <div class="confirm-msg">このタスクを削除しますか？</div>
+    <div class="confirm-btns">
+      <button class="btn btn-outline" id="conf-cancel">キャンセル</button>
+      <button class="btn btn-primary" id="conf-ok" style="background:var(--red);">削除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_GROUPS=[
+  {parent:"筑紫",courses:["筑紫下2福南上1","筑紫下2補助","筑紫下3上2"]},
+  {parent:"博多南",courses:["博多南下7上4","博多南下6上3","博多南下回送上8"]},
+  {parent:"福南",courses:["福南下補助2上"]},
+  {parent:"城南",courses:["城南下3上1"]},
+  {parent:"行橋",courses:["行橋下2上1"]},
+  {parent:"和白",courses:["和白下1補助","和白下5上4","和白下補助3上"]},
+  {parent:"直方",courses:["直方補助下1上1","直方下3上2"]},
+  {parent:"前原",courses:["前原下4上3"]},
+  {parent:"福岡",courses:["福岡下9上6","福岡上8","福岡上14"]},
+  {parent:"博多北",courses:["博多北上9"]},
+  {parent:"伊田",courses:["伊田下1"]},
+  {parent:"福間",courses:["福間下補助"]},
+  {parent:"宗像",courses:["宗像下5上4"]},
+  {parent:"飯塚",courses:["飯塚上3"]},
+  {parent:"筑紫野",courses:["筑紫野下補助"]},
+  {parent:"福西",courses:["福西補助下上"]},
+  {parent:"福岡東",courses:["福岡東下補助上2","福岡東下4上1"]},
+  {parent:"福岡西",courses:["福岡西下2"]},
+  {parent:"福岡中央",courses:["福岡中央下11上13"]}
+];
+
+const SKEY='fukugyou_v3';
+function load(){try{const s=localStorage.getItem(SKEY);if(s){const p=JSON.parse(s);return{tasks:p.tasks||[],groups:p.groups||JSON.parse(JSON.stringify(DEFAULT_GROUPS))};}}catch(e){}return{tasks:[],groups:JSON.parse(JSON.stringify(DEFAULT_GROUPS))};}
+function save(){try{localStorage.setItem(SKEY,JSON.stringify({tasks:st.tasks,groups:st.groups}));}catch(e){}snapshot();}
+
+const now=new Date();
+const loaded=load();
+const st={year:now.getFullYear(),month:now.getMonth()+1,price:3000,course:'',tasks:loaded.tasks,groups:loaded.groups};
+
+// 初期日付
+(function(){
+  const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0'),d=String(now.getDate()).padStart(2,'0');
+  document.getElementById('inp-date').value=`${y}-${m}-${d}`;
+})();
+
+function ml(){return`${st.year}年${st.month}月`;}
+function fmtDate(s){if(!s)return'';const d=new Date(s+'T00:00:00');return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;}
+function getMonthTasks(){return st.tasks.filter(t=>{const d=new Date(t.date);return d.getFullYear()===st.year&&(d.getMonth()+1)===st.month;}).sort((a,b)=>new Date(a.date)-new Date(b.date));}
+
+function renderAll(){
+  ['ml1','ml2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=ml();});
+  const tasks=getMonthTasks();
+  const cnt=tasks.length,amt=tasks.reduce((s,t)=>s+t.price,0);
+  document.getElementById('sc1').textContent=cnt+'件';
+  document.getElementById('sa1').textContent='¥'+amt.toLocaleString();
+  document.getElementById('sc2').textContent=cnt+'件';
+  document.getElementById('sa2').textContent='¥'+amt.toLocaleString();
+  renderList(tasks);
+  if(typeof refreshBanner==='function')refreshBanner();
+}
+
+function renderGrid(){
+  const grid=document.getElementById('parent-grid');
+  grid.innerHTML='';
+  st.groups.forEach(g=>{
+    const chip=document.createElement('div');
+    chip.className='parent-chip'+(g.courses.length>1?' has-sub':'');
+    chip.textContent=g.parent;
+    chip.onclick=()=>g.courses.length>1?openSub(g):selectCourse(g.courses[0]);
+    grid.appendChild(chip);
+  });
+  const add=document.createElement('div');
+  add.className='parent-chip new-chip';
+  add.textContent='＋ 追加';
+  add.onclick=addCourse;
+  grid.appendChild(add);
+  const mng=document.createElement('div');
+  mng.className='parent-chip new-chip';
+  mng.style.color='var(--red)';mng.style.borderColor='var(--red)';
+  mng.textContent='⚙️ 管理・削除';
+  mng.onclick=openManage;
+  grid.appendChild(mng);
+}
+
+function openManage(){
+  const list=document.getElementById('manage-list');
+  list.innerHTML='';
+  if(!st.groups.length){list.innerHTML='<div class="manage-empty">グループがありません</div>';}
+  st.groups.forEach((g,gi)=>{
+    const block=document.createElement('div');
+    block.className='manage-group';
+    const head=document.createElement('div');
+    head.className='manage-ghead';
+    head.innerHTML=`<span>${g.parent}</span>`;
+    const gdel=document.createElement('button');
+    gdel.className='manage-del-group';
+    gdel.textContent='グループ削除';
+    gdel.onclick=()=>{
+      if(confirm(`グループ「${g.parent}」を削除しますか？\n（中のコースもすべて消えます）`)){
+        st.groups.splice(gi,1);save();renderGrid();openManage();toast('🗑️ グループを削除しました');
+      }
+    };
+    head.appendChild(gdel);
+    block.appendChild(head);
+    const cl=document.createElement('div');
+    cl.className='manage-courses';
+    g.courses.forEach((c,ci)=>{
+      const row=document.createElement('div');
+      row.className='manage-course';
+      row.innerHTML=`<span>${c}</span>`;
+      const cdel=document.createElement('button');
+      cdel.className='manage-del-course';
+      cdel.textContent='×';
+      cdel.onclick=()=>{
+        if(confirm(`コース「${c}」を削除しますか？`)){
+          g.courses.splice(ci,1);
+          if(g.courses.length===0)st.groups.splice(gi,1);
+          save();renderGrid();openManage();toast('🗑️ コースを削除しました');
+        }
+      };
+      row.appendChild(cdel);
+      cl.appendChild(row);
+    });
+    block.appendChild(cl);
+    list.appendChild(block);
+  });
+  document.getElementById('manage-overlay').classList.add('open');
+}
+function closeManage(){document.getElementById('manage-overlay').classList.remove('open');}
+
+function selectCourse(name){
+  st.course=name;
+  document.getElementById('sel-name').textContent=name;
+  document.getElementById('sel-disp').classList.add('visible');
+  closeSub();
+}
+function clearCourse(){st.course='';document.getElementById('sel-disp').classList.remove('visible');}
+
+function openSub(g){
+  document.getElementById('sub-lbl').textContent=g.parent;
+  const list=document.getElementById('sub-list');
+  list.innerHTML='';
+  g.courses.forEach(c=>{
+    const item=document.createElement('div');
+    item.className='sub-item';
+    item.innerHTML=`<div class="sub-dot"></div><span>${c}</span>`;
+    item.onclick=()=>selectCourse(c);
+    list.appendChild(item);
+  });
+  document.getElementById('sub-overlay').classList.add('open');
+}
+function closeSub(){document.getElementById('sub-overlay').classList.remove('open');}
+
+function addCourse(){
+  const name=window.prompt('コース名を入力\n例: 筑紫下2博多北上1');
+  if(!name?.trim())return;
+  const parent=window.prompt('グループ名を入力\n例: 筑紫（新規グループも可）');
+  if(!parent?.trim())return;
+  const n=name.trim(),p=parent.trim();
+  const ex=st.groups.find(g=>g.parent===p);
+  if(ex){if(!ex.courses.includes(n))ex.courses.push(n);}
+  else{st.groups.push({parent:p,courses:[n]});}
+  save();renderGrid();selectCourse(n);
+  toast('✅ コースを追加しました！');
+}
+
+document.getElementById('add-btn').onclick=function(){
+  const date=document.getElementById('inp-date').value;
+  const memo=document.getElementById('inp-memo').value.trim();
+  if(!date){toast('❌ 日付を選択してください',true);return;}
+  if(!st.course){toast('❌ コースを選択してください',true);return;}
+  st.tasks.push({id:Date.now(),date,course:st.course,price:st.price,memo});
+  save();
+  document.getElementById('inp-memo').value='';
+  clearCourse();
+  renderAll();
+  toast('✅ 追加しました！');
+};
+
+function renderList(tasks){
+  const c=document.getElementById('task-list');
+  if(!tasks.length){c.innerHTML='<div class="empty">📭 この月のタスクはありません</div>';return;}
+  c.innerHTML=tasks.map(t=>`<div class="task-item${t.price===4000?' p4':''}">
+    <div>
+      <div class="task-date">${fmtDate(t.date)}</div>
+      <div class="task-course">${t.course}</div>
+      ${t.memo?`<div style="font-size:10px;color:var(--muted);margin-top:1px">${t.memo}</div>`:''}
+    </div>
+    <div style="display:flex;align-items:center">
+      <span class="task-price ${t.price===3000?'c3':'c4'}">¥${t.price.toLocaleString()}</span>
+      <button class="task-del" data-id="${t.id}">×</button>
+    </div>
+  </div>`).join('');
+}
+
+let pendingDel=null;
+document.getElementById('task-list').addEventListener('click',function(e){
+  const btn=e.target.closest('.task-del');
+  if(!btn)return;
+  pendingDel=Number(btn.dataset.id);
+  document.getElementById('confirm-ov').classList.add('open');
+});
+document.getElementById('conf-ok').onclick=function(){
+  if(pendingDel){st.tasks=st.tasks.filter(t=>t.id!==pendingDel);save();renderAll();toast('🗑️ 削除しました');}
+  pendingDel=null;document.getElementById('confirm-ov').classList.remove('open');
+};
+document.getElementById('conf-cancel').onclick=function(){pendingDel=null;document.getElementById('confirm-ov').classList.remove('open');};
+
+document.getElementById('tabs').addEventListener('click',function(e){
+  const tab=e.target.closest('.tab');if(!tab)return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  ['record','list','invoice'].forEach(name=>{
+    document.getElementById('page-'+name).classList.toggle('active',tab.dataset.tab===name);
+  });
+  renderAll();
+});
+
+document.querySelectorAll('.month-btn').forEach(btn=>btn.addEventListener('click',function(){
+  const d=Number(this.dataset.delta);
+  st.month+=d;
+  if(st.month>12){st.month=1;st.year++;}
+  if(st.month<1){st.month=12;st.year--;}
+  renderAll();
+}));
+
+document.querySelectorAll('.price-btn').forEach(btn=>btn.addEventListener('click',function(){
+  st.price=Number(this.dataset.price);
+  document.querySelectorAll('.price-btn').forEach(b=>b.classList.toggle('selected',b===this));
+}));
+
+document.getElementById('clear-btn').onclick=clearCourse;
+document.getElementById('sub-cancel').onclick=closeSub;
+document.getElementById('sub-overlay').onclick=function(e){if(e.target===this)closeSub();};
+document.getElementById('manage-close').onclick=closeManage;
+document.getElementById('manage-overlay').onclick=function(e){if(e.target===this)closeManage();};
+
+document.getElementById('exp-btn').onclick=function(){
+  const blob=new Blob([JSON.stringify({tasks:st.tasks,groups:st.groups},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='fukugyou-backup.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('✅ バックアップを保存しました');
+  setLastExport();
+};
+document.getElementById('imp-input').addEventListener('change',function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!Array.isArray(data.tasks))throw new Error();
+      st.tasks=data.tasks;
+      st.groups=data.groups||JSON.parse(JSON.stringify(DEFAULT_GROUPS));
+      save();renderGrid();renderAll();toast('✅ データを復元しました！');
+    }catch{toast('❌ 読み込みに失敗しました',true);}
+  };
+  reader.readAsText(file);e.target.value='';
+});
+
+// ====================================================
+// 請求書（統合版）
+// ====================================================
+const CLIENT_PRESETS={shindo:{name:'進藤運輸倉庫有限会社',address:'福岡県福岡市博多区諸岡3丁目24番1号'}};
+let items=[];
+
+function ivSetDefaultDates(){
+  const n=new Date();const y=n.getFullYear(),m=n.getMonth()+1;
+  const last=new Date(y,m,0).getDate();
+  const iDate=`${y}-${String(m).padStart(2,'0')}-01`;
+  const dDate=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+  const num=`${y}${String(m).padStart(2,'0')}${String(last).padStart(2,'0')}`;
+  const inv=document.getElementById('invoiceNumber'),iEl=document.getElementById('invoiceDate'),dEl=document.getElementById('dueDate');
+  if(!inv.value)inv.value=num;
+  if(!iEl.value)iEl.value=iDate;
+  if(!dEl.value)dEl.value=dDate;
+}
+
+function showTab(n){
+  document.querySelectorAll('#page-invoice .iv-pane').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#page-invoice .iv-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('iv-tab-'+n).classList.add('active');
+  document.querySelectorAll('#page-invoice .iv-tab')[['edit','items','preview'].indexOf(n)].classList.add('active');
+  if(n==='preview')renderPreview();
+  if(n==='items')updateTotal();
+}
+
+function applyClientPreset(){
+  const key=document.getElementById('clientPreset').value;
+  if(!key||key==='custom')return;
+  const p=CLIENT_PRESETS[key];
+  if(p){document.getElementById('clientName').value=p.name;document.getElementById('clientAddress').value=p.address;}
+}
+
+function onItemSelect(){
+  const val=document.getElementById('itemSelect').value;
+  const cng=document.getElementById('customNameGroup');
+  const badge=document.getElementById('priceBadge');
+  if(val==='__custom__'){cng.style.display='block';document.getElementById('newItemName').value='';document.getElementById('newItemName').focus();badge.style.display='none';}
+  else if(val){
+    cng.style.display='none';
+    const price=parseInt(val.split('|')[1]);
+    const ps=document.getElementById('priceSelect');
+    if([...ps.options].find(o=>o.value===String(price))){ps.value=String(price);document.getElementById('customPriceGroup').style.display='none';}
+    else{ps.value='__custom__';document.getElementById('customPriceGroup').style.display='block';document.getElementById('newItemPrice').value=price;}
+    badge.textContent=`¥${price.toLocaleString()}`;badge.style.display='';
+  }else{cng.style.display='none';badge.style.display='none';}
+  document.getElementById('addForm').classList.add('highlight');
+}
+
+function onPriceSelect(){
+  const val=document.getElementById('priceSelect').value;
+  const cg=document.getElementById('customPriceGroup');
+  if(val==='__custom__'){cg.style.display='block';document.getElementById('newItemPrice').focus();}
+  else{cg.style.display='none';const b=document.getElementById('priceBadge');b.textContent=`¥${parseInt(val).toLocaleString()}`;b.style.display='';}
+}
+
+function changeQty(d){const inp=document.getElementById('newItemQty');inp.value=Math.max(1,(parseInt(inp.value)||1)+d);}
+function getPrice(){const ps=document.getElementById('priceSelect').value;return ps==='__custom__'?(parseInt(document.getElementById('newItemPrice').value)||0):(parseInt(ps)||0);}
+function getItemName(){const val=document.getElementById('itemSelect').value;return(val==='__custom__'||!val)?document.getElementById('newItemName').value.trim():val.split('|')[0];}
+
+function addItem(){
+  const name=getItemName(),price=getPrice(),qty=parseInt(document.getElementById('newItemQty').value)||1;
+  if(!name){alert('品目名を選択または入力してください');return;}
+  if(price<=0){alert('単価を入力してください');return;}
+  items.push({name,unit_price:price,qty,amount:price*qty});
+  document.getElementById('itemSelect').value='';
+  document.getElementById('newItemName').value='';
+  document.getElementById('newItemQty').value='1';
+  document.getElementById('customNameGroup').style.display='none';
+  document.getElementById('priceBadge').style.display='none';
+  document.getElementById('addForm').classList.remove('highlight');
+  renderItems();
+}
+
+function removeItem(i){items.splice(i,1);renderItems();}
+function clearItems(){if(items.length&&!confirm('全品目を削除しますか？'))return;items=[];renderItems();}
+
+function renderItems(){
+  document.getElementById('itemsList').innerHTML=items.map((it,i)=>
+    `<div class="item-card"><div class="item-card-left"><div class="item-name">${esc(it.name)}</div>
+      <div class="item-details"><span>単価: ¥${it.unit_price.toLocaleString()}</span><span>×${it.qty}日</span><span class="amt">¥${it.amount.toLocaleString()}</span></div>
+    </div><button class="item-remove" onclick="removeItem(${i})">×</button></div>`).join('');
+  updateTotal();
+}
+function updateTotal(){document.getElementById('totalDisplay').textContent='¥'+items.reduce((s,i)=>s+i.amount,0).toLocaleString();}
+
+function loadFromRecords(){
+  const tasks=getMonthTasks();
+  if(!tasks.length){alert('「記録」タブの今月（'+ml()+'）にデータがありません。\n月を切り替えてから取り込んでください。');return;}
+  if(items.length&&!confirm('現在の品目を「記録」タブの今月分で置き換えますか？'))return;
+  const map={};
+  tasks.forEach(t=>{const k=t.course+'|'+t.price;if(!map[k])map[k]={name:t.course,unit_price:t.price,qty:0,amount:0};map[k].qty++;map[k].amount+=t.price;});
+  items=Object.values(map);
+  renderItems();
+  alert('今月（'+ml()+'）の記録を取り込みました！\n合計: ¥'+items.reduce((s,i)=>s+i.amount,0).toLocaleString());
+}
+
+function loadPreset(label,num,iDate,dDate,data){
+  if(items.length&&!confirm(`現在の品目を${label}データで置き換えますか？`))return;
+  document.getElementById('invoiceNumber').value=num;
+  document.getElementById('invoiceDate').value=iDate;
+  document.getElementById('dueDate').value=dDate;
+  items=data;renderItems();
+  alert(`${label}データを読み込みました！\n合計: ¥${items.reduce((s,i)=>s+i.amount,0).toLocaleString()}`);
+}
+function loadJanuary(){loadPreset('1月分','20260131','2026-02-01','2026-02-28',[
+  {name:'筑紫下2福南下1',unit_price:3000,qty:2,amount:6000},{name:'博多南下7上4',unit_price:3000,qty:10,amount:30000},
+  {name:'和白下1補助',unit_price:4000,qty:8,amount:32000},{name:'直方補助下1上1',unit_price:3000,qty:8,amount:24000},
+  {name:'博多南下6上3',unit_price:3000,qty:17,amount:51000},{name:'福岡下9上6',unit_price:3000,qty:9,amount:27000},
+  {name:'福岡西下4上4',unit_price:4000,qty:7,amount:28000}]);}
+function loadFebruary(){loadPreset('2月分','20260228','2026-03-01','2026-03-31',[
+  {name:'筑紫下2福南下1',unit_price:3000,qty:2,amount:6000},{name:'博多南下7上4',unit_price:3000,qty:7,amount:21000},
+  {name:'和白下1補助',unit_price:4000,qty:6,amount:24000},{name:'直方補助下1上1',unit_price:3000,qty:6,amount:18000},
+  {name:'博多南下6上3',unit_price:3000,qty:14,amount:42000},{name:'福岡下9上6',unit_price:3000,qty:9,amount:27000},
+  {name:'福岡西下4上4',unit_price:4000,qty:3,amount:12000},{name:'博多南下10上7',unit_price:4000,qty:2,amount:8000},
+  {name:'城南下補助3博多北上',unit_price:4000,qty:1,amount:4000}]);}
+function loadMarch(){loadPreset('3月分','20260331','2026-04-01','2026-04-30',[
+  {name:'筑紫下2福南上1',unit_price:3000,qty:3,amount:9000},{name:'博多南下7上4',unit_price:3000,qty:8,amount:24000},
+  {name:'和白下1補助',unit_price:4000,qty:5,amount:20000},{name:'直方補助下1上1',unit_price:3000,qty:5,amount:15000},
+  {name:'博多南下6上3',unit_price:3000,qty:14,amount:42000},{name:'福岡下9上6',unit_price:3000,qty:10,amount:30000},
+  {name:'福岡西下4上4',unit_price:4000,qty:5,amount:20000},{name:'飯塚下1',unit_price:4000,qty:1,amount:4000},
+  {name:'博多南下5上2',unit_price:3000,qty:2,amount:6000},{name:'城南下4上2',unit_price:3000,qty:2,amount:6000},
+  {name:'博多南下10上7',unit_price:4000,qty:1,amount:4000}]);}
+function loadApril(){loadPreset('4月分','20260430','2026-05-01','2026-05-31',[
+  {name:'筑紫下2福南上1',unit_price:3000,qty:1,amount:3000},{name:'博多南下7上4',unit_price:3000,qty:5,amount:15000},
+  {name:'福岡南補助2上補助',unit_price:3000,qty:1,amount:3000},{name:'和白下1補助',unit_price:4000,qty:4,amount:16000},
+  {name:'直方補助下1上1',unit_price:3000,qty:4,amount:12000},{name:'博多南下6上3',unit_price:3000,qty:15,amount:45000},
+  {name:'福岡下9上6',unit_price:3000,qty:11,amount:33000},{name:'和白下5上4',unit_price:4000,qty:1,amount:4000},
+  {name:'博多南下10上7',unit_price:4000,qty:5,amount:20000},{name:'博多南下4',unit_price:4000,qty:1,amount:4000},
+  {name:'和白下2上1',unit_price:4000,qty:1,amount:4000},{name:'福岡南下1',unit_price:4000,qty:1,amount:4000},
+  {name:'筑紫下1上1',unit_price:3000,qty:1,amount:3000},{name:'前原下3補助上2',unit_price:3000,qty:1,amount:3000}]);}
+function loadSample(){
+  if(items.length&&!confirm('現在の品目をサンプルで置き換えますか？'))return;
+  items=[{name:'博多南下6上3',unit_price:3000,qty:14,amount:42000},{name:'福岡下9上6',unit_price:3000,qty:10,amount:30000},
+    {name:'和白下1補助',unit_price:4000,qty:5,amount:20000},{name:'福岡西下4上4',unit_price:4000,qty:5,amount:20000},
+    {name:'博多南下7上4',unit_price:3000,qty:8,amount:24000},{name:'直方補助下1上1',unit_price:3000,qty:5,amount:15000}];
+  renderItems();
+}
+
+const IVKEY='invoiceAppData';
+function saveData(){
+  try{localStorage.setItem(IVKEY,JSON.stringify({fields:getD(),items,savedAt:new Date().toISOString()}));showSavedMsg('保存しました ✓');}
+  catch(e){showSavedMsg('保存に失敗しました');}
+}
+function loadInvoiceData(){
+  try{const raw=localStorage.getItem(IVKEY);if(!raw)return;const state=JSON.parse(raw);
+    if(state.fields)Object.keys(state.fields).forEach(k=>{const el=document.getElementById(k);if(el)el.value=state.fields[k];});
+    if(Array.isArray(state.items))items=state.items;
+  }catch(e){}
+}
+function showSavedMsg(msg){const el=document.getElementById('savedMsg');if(!el)return;el.textContent=msg;el.style.opacity='1';setTimeout(()=>{el.style.opacity='0';},2500);}
+function getD(){return{
+  invoiceNumber:document.getElementById('invoiceNumber').value,invoiceDate:document.getElementById('invoiceDate').value,
+  dueDate:document.getElementById('dueDate').value,clientName:document.getElementById('clientName').value,
+  clientAddress:document.getElementById('clientAddress').value,issuerName:document.getElementById('issuerName').value,
+  issuerZip:document.getElementById('issuerZip').value,issuerAddress:document.getElementById('issuerAddress').value,
+  issuerTel:document.getElementById('issuerTel').value,bankName:document.getElementById('bankName').value,
+  bankBranch:document.getElementById('bankBranch').value,bankAccountName:document.getElementById('bankAccountName').value,
+  remarks:document.getElementById('remarks').value};}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+function renderPreview(){
+  const d=getD(),total=items.reduce((s,i)=>s+i.amount,0);
+  const rows=items.map(it=>`<tr><td>${esc(it.name)}</td><td>¥${it.unit_price.toLocaleString()}</td><td>${it.qty}</td><td>¥${it.amount.toLocaleString()}</td></tr>`).join('');
+  document.getElementById('previewContent').innerHTML=`
+    <div class="pf-hdr"><div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><h2>請 求 書</h2><small>INVOICE</small></div>
+      <div style="text-align:right;font-size:10px;color:var(--txt-l)">
+        <div>No. <strong style="color:var(--txt)">${esc(d.invoiceNumber)}</strong></div>
+        <div style="margin-top:3px">請求日 <strong style="color:var(--txt)">${esc(d.invoiceDate)}</strong></div>
+        <div style="margin-top:3px">期限 <strong style="color:var(--txt)">${esc(d.dueDate)}</strong></div>
+      </div></div></div>
+    <div style="display:flex;gap:10px;margin:10px 0;align-items:flex-start">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700">${esc(d.clientName)} <span style="font-size:10px;color:var(--txt-l);font-weight:400">御中</span></div>
+        <div style="font-size:9px;color:var(--txt-m);margin-top:3px">${esc(d.clientAddress)}</div>
+        <div style="font-size:9px;color:var(--txt-m);margin-top:8px;line-height:1.8">平素より格別のお引き立てを賜り、誠に有難う御座います。<br>下記の通りご請求申し上げます。</div>
+      </div>
+      <div style="border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:6px;padding:8px 10px;font-size:10px">
+        <strong style="font-size:12px;color:var(--blue)">${esc(d.issuerName)}</strong><br>
+        <span style="color:var(--txt-m)">〒${esc(d.issuerZip)}</span><br>
+        <span style="color:var(--txt-m)">${esc(d.issuerAddress)}</span><br>
+        <span style="color:var(--txt-m)">TEL: ${esc(d.issuerTel)}</span>
+      </div></div>
+    <div class="pf-total"><span class="lbl">ご請求金額</span><span class="val">¥${total.toLocaleString()}</span></div>
+    <table class="pf-tbl"><thead><tr><th>品目</th><th>単価</th><th>数量</th><th>金額</th></tr></thead><tbody>${rows}</tbody></table>
+    <div style="text-align:right;font-size:11px;margin:6px 0">
+      <div style="padding:3px 0;border-bottom:1px dashed var(--border)">合計（税込）<strong style="margin-left:12px">¥${total.toLocaleString()}</strong></div>
+      <div style="padding:3px 0;border-bottom:1px dashed var(--border)">消費税<span style="margin-left:12px">免税事業者のため非課税</span></div>
+    </div>
+    <div style="border:1.5px solid var(--blue);border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin:8px 0;border-left:4px solid var(--blue)">
+      <span style="color:var(--blue);font-size:10px;font-weight:700">お支払金額</span>
+      <span style="color:var(--txt);font-size:16px;font-weight:700">¥${total.toLocaleString()}</span>
+    </div>
+    <div class="pf-bank"><strong style="color:var(--blue)">【振込先】</strong><br>${esc(d.bankName)}<br>${esc(d.bankBranch)}<br><strong style="color:var(--blue)">${esc(d.bankAccountName)}</strong></div>
+    ${d.remarks?`<div style="font-size:10px;color:var(--txt-l)"><strong>備考：</strong>${esc(d.remarks)}</div>`:''}
+    <div class="pf-footer"></div>`;
+}
+
+function buildInvoiceHTML(){
+  const d=getD(),total=items.reduce((s,i)=>s+i.amount,0);
+  const rows=items.map(it=>`<tr>
+    <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #C0D8E8;color:#1A1A2E">${esc(it.name)}</td>
+    <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #C0D8E8;text-align:right;color:#3A3A4A">¥${it.unit_price.toLocaleString()}</td>
+    <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #C0D8E8;text-align:right;color:#3A3A4A">${it.qty}</td>
+    <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #C0D8E8;text-align:right;color:#1A1A2E;font-weight:500">¥${it.amount.toLocaleString()}</td></tr>`).join('');
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;color:#1A1A2E;-webkit-print-color-adjust:exact;print-color-adjust:exact">
+  <div style="border-top:3px solid #1A7FC4;border-bottom:2px solid #1A7FC4;padding:18px 24px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:4px;height:28px;background:#1A7FC4;border-radius:2px"></div>
+        <div><div style="font-size:24px;font-weight:700;letter-spacing:6px;color:#1A7FC4">請 求 書</div><div style="font-size:8px;color:#2A96D8;letter-spacing:3px;margin-top:2px">INVOICE</div></div>
+      </div>
+      <div style="text-align:right;font-size:10px">
+        <div style="color:#7A8A9A">請求書番号</div><div style="font-size:12px;font-weight:600;margin-bottom:3px;color:#1A1A2E">${esc(d.invoiceNumber)}</div>
+        <div style="color:#7A8A9A">請求日</div><div style="font-size:12px;font-weight:600;margin-bottom:3px;color:#1A1A2E">${esc(d.invoiceDate)}</div>
+        <div style="color:#7A8A9A">お支払期限</div><div style="font-size:12px;font-weight:600;color:#1A1A2E">${esc(d.dueDate)}</div>
+      </div>
+    </div>
+  </div>
+  <div style="height:1px;background:#52C8E8"></div>
+  <div style="padding:18px 24px">
+    <div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:14px;align-items:flex-start">
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700;color:#1A1A2E">${esc(d.clientName)} <span style="font-size:11px;color:#7A8A9A;font-weight:400">御中</span></div>
+        <div style="font-size:10px;color:#3A3A4A;margin-top:3px">${esc(d.clientAddress)}</div>
+        <div style="font-size:10px;color:#3A3A4A;margin-top:10px;line-height:1.8">平素より格別のお引き立てを賜り、誠に有難う御座います。<br>下記の通りご請求申し上げます。</div>
+      </div>
+      <div style="border:1px solid #C0D8E8;border-left:3px solid #1A7FC4;border-radius:6px;padding:10px 12px;min-width:210px">
+        <div style="font-size:13px;font-weight:700;color:#1A7FC4">${esc(d.issuerName)}</div>
+        <div style="font-size:9px;color:#3A3A4A;margin-top:4px">〒${esc(d.issuerZip)}<br>${esc(d.issuerAddress)}</div>
+        <div style="font-size:9px;color:#3A3A4A;margin-top:2px">TEL: ${esc(d.issuerTel)}</div>
+      </div>
+    </div>
+    <div style="border:2px solid #1A7FC4;border-radius:6px;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-left:6px solid #1A7FC4">
+      <span style="color:#1A7FC4;font-size:12px">ご請求金額</span><span style="color:#1A1A2E;font-size:22px;font-weight:700">¥${total.toLocaleString()}</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;border:1px solid #1A7FC4">
+      <thead><tr style="background:#F0F7FB">
+        <th style="padding:6px 8px;font-size:10px;text-align:left;color:#1A7FC4;border:1px solid #1A7FC4">品目</th>
+        <th style="padding:6px 8px;font-size:10px;text-align:right;color:#1A7FC4;border:1px solid #1A7FC4">単価</th>
+        <th style="padding:6px 8px;font-size:10px;text-align:right;color:#1A7FC4;border:1px solid #1A7FC4">数量</th>
+        <th style="padding:6px 8px;font-size:10px;text-align:right;color:#1A7FC4;border:1px solid #1A7FC4">金額</th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>
+    <div style="text-align:right;font-size:11px;margin-top:8px">
+      <div style="padding:3px 0;border-bottom:1px dashed #C0D8E8">合計（税込）<strong style="margin-left:14px">¥${total.toLocaleString()}</strong></div>
+      <div style="padding:3px 0;border-bottom:1px dashed #C0D8E8">消費税<span style="margin-left:14px">免税事業者のため非課税</span></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin:6px 0">
+      <div style="border:1.5px solid #1A7FC4;border-radius:6px;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;min-width:250px;border-left:5px solid #1A7FC4">
+        <span style="color:#1A7FC4;font-size:11px;font-weight:600">お支払金額</span><span style="color:#1A1A2E;font-size:16px;font-weight:700">¥${total.toLocaleString()}</span>
+      </div>
+    </div>
+    <div style="border:1px solid #C0D8E8;border-left:3px solid #1A7FC4;border-radius:6px;padding:10px 12px;margin-top:14px;max-width:280px;font-size:11px">
+      <strong style="color:#1A7FC4">【振込先】</strong><br>${esc(d.bankName)}<br>${esc(d.bankBranch)}<br><strong style="color:#1A7FC4">${esc(d.bankAccountName)}</strong>
+    </div>
+    ${d.remarks?`<div style="margin-top:10px;font-size:9px;color:#7A8A9A"><strong>備考：</strong>${esc(d.remarks)}</div>`:''}
+  </div>
+  <div style="position:fixed;bottom:0;left:0;right:0;height:3px;background:#1A7FC4"></div>
+  <div style="position:fixed;bottom:3px;left:0;right:0;height:1px;background:#52C8E8"></div>
+</div>`;
+}
+
+function printInvoice(){
+  const d=getD();
+  document.getElementById('printArea').innerHTML=buildInvoiceHTML();
+  document.title='請求書_'+(d.invoiceNumber||'');
+  document.getElementById('pmOverlay').classList.add('show');
+}
+function closePrintModal(){document.getElementById('pmOverlay').classList.remove('show');document.getElementById('printArea').innerHTML='';document.title='副業管理アプリ';}
+function doPrint(){
+  document.getElementById('pmOverlay').classList.remove('show');
+  setTimeout(()=>{window.print();setTimeout(()=>{document.getElementById('printArea').innerHTML='';document.title='副業管理アプリ';},2000);},150);
+}
+
+ivSetDefaultDates();
+loadInvoiceData();
+renderItems();
+
+function toast(msg,isErr){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=isErr?'var(--red)':'var(--green)';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ====================================================
+// 自動バックアップ
+// ====================================================
+const BKEY=SKEY+'_backups', LXKEY=SKEY+'_lastexp';
+function getSnaps(){try{return JSON.parse(localStorage.getItem(BKEY))||[];}catch(e){return[];}}
+function snapshot(){try{const json=JSON.stringify({tasks:st.tasks,groups:st.groups});const list=getSnaps();if(list[0]&&list[0].json===json)return;list.unshift({at:new Date().toISOString(),json});if(list.length>15)list.length=15;localStorage.setItem(BKEY,JSON.stringify(list));}catch(e){}}
+function fmtAt(iso){const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function setLastExport(){try{localStorage.setItem(LXKEY,new Date().toISOString());}catch(e){}updateLastBk();refreshBanner();}
+function bkStale(){const l=localStorage.getItem(LXKEY);if(!l)return st.tasks.length>0;return(Date.now()-new Date(l).getTime())>3*86400000;}
+function refreshBanner(){document.getElementById('bk-banner').classList.toggle('show',bkStale());}
+function updateLastBk(){const l=localStorage.getItem(LXKEY);document.getElementById('lastbk-txt').textContent=l?('前回のバックアップ保存：'+fmtAt(l)):'まだ一度もバックアップを保存していません';}
+function openSnaps(){
+  const list=getSnaps();const el=document.getElementById('snap-list');
+  if(!list.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px 0;font-size:13px">まだ自動保存がありません</div>';}
+  else{el.innerHTML=list.map((s,i)=>{let cnt=0,amt=0;try{const d=JSON.parse(s.json);cnt=(d.tasks||[]).length;amt=(d.tasks||[]).reduce((a,t)=>a+(t.price||0),0);}catch(e){}return`<div class="snap-item"><div><div class="snap-date">${fmtAt(s.at)}</div><span style="font-size:13px">${cnt}件 ¥${amt.toLocaleString()}</span></div><button class="snap-restore" onclick="restoreSnap(${i})">復元</button></div>`;}).join('');}
+  document.getElementById('snap-overlay').classList.add('open');
+}
+function restoreSnap(i){
+  const list=getSnaps();const s=list[i];if(!s)return;
+  if(!confirm('この時点のデータに復元しますか？\n（今のデータは置き換わります）'))return;
+  try{const d=JSON.parse(s.json);st.tasks=d.tasks||[];st.groups=d.groups||JSON.parse(JSON.stringify(DEFAULT_GROUPS));save();renderGrid();renderAll();document.getElementById('snap-overlay').classList.remove('open');toast('✅ 復元しました');}
+  catch(e){toast('❌ 復元に失敗しました',true);}
+}
+document.getElementById('restore-btn').onclick=openSnaps;
+document.getElementById('snap-close').onclick=function(){document.getElementById('snap-overlay').classList.remove('open');};
+document.getElementById('snap-overlay').onclick=function(e){if(e.target===this)this.classList.remove('open');};
+document.getElementById('banner-backup-btn').onclick=function(){document.getElementById('exp-btn').click();};
+
+snapshot();
+updateLastBk();
+refreshBanner();
+
+renderGrid();
+renderAll();
+</script>
+</body>
+</html>

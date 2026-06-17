@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="タスク管理">
+<link rel="apple-touch-icon" href="task-icon.png">
+<link rel="icon" type="image/png" href="task-icon.png">
+<title>タスク管理</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+:root{
+  --bg:#f5f4f0;--card:#fff;--ink:#1a1a1a;--ink2:#555;--border:#e0ddd6;
+  --done-bg:#f0f0ec;--done-ink:#aaa;
+  --cat-work:#3b6fd4;--cat-family:#d46b3b;--cat-car:#2ba57a;--cat-money:#9b4fd4;--cat-other:#888;
+  --priority-bg:#fff0ee;--priority-dot:#e03a2e;--check:#3b6fd4;
+  --shadow:0 2px 12px rgba(0,0,0,.08);--radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:40px;}
+header{position:sticky;top:0;z-index:100;background:var(--bg);padding:20px 18px 8px;}
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+h1{font-size:26px;font-weight:700;letter-spacing:-.5px;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.counts{font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 12px;}
+.counts b{font-weight:700;color:var(--ink);}
+.add-btn{width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;font-size:22px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.add-btn:active{transform:scale(.92);}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:0 0 6px;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--card);font-size:13px;font-weight:500;cursor:pointer;color:var(--ink2);font-family:'Noto Sans JP',sans-serif;}
+.tab.active{color:#fff;border-color:transparent;}
+.tab[data-cat="all"].active{background:var(--ink);}
+.tab[data-cat="仕事"].active{background:var(--cat-work);}
+.tab[data-cat="家族"].active{background:var(--cat-family);}
+.tab[data-cat="車"].active{background:var(--cat-car);}
+.tab[data-cat="お金"].active{background:var(--cat-money);}
+.tab[data-cat="その他"].active{background:var(--cat-other);}
+.list{padding:4px 18px 0;display:flex;flex-direction:column;gap:10px;}
+.task{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 14px 12px;display:flex;align-items:flex-start;gap:12px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.task.done{background:var(--done-bg);border-color:transparent;box-shadow:none;opacity:.65;}
+.task.priority::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--priority-dot);border-radius:var(--radius) 0 0 var(--radius);}
+.check-btn{width:26px;height:26px;flex-shrink:0;border-radius:50%;border:2px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.task.done .check-btn{background:var(--check);border-color:var(--check);}
+.task-body{flex:1;min-width:0;}
+.task-title{font-size:15px;font-weight:500;line-height:1.4;word-break:break-all;}
+.task.done .task-title{text-decoration:line-through;color:var(--done-ink);}
+.task-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;align-items:center;}
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;color:#fff;}
+.badge.work{background:var(--cat-work);}
+.badge.family{background:var(--cat-family);}
+.badge.car{background:var(--cat-car);}
+.badge.money{background:var(--cat-money);}
+.badge.other{background:var(--cat-other);}
+.deadline{font-size:12px;color:var(--ink2);}
+.deadline.over{color:var(--priority-dot);font-weight:700;}
+.priority-tag{font-size:11px;font-weight:700;color:var(--priority-dot);background:var(--priority-bg);padding:2px 8px;border-radius:10px;}
+.task-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.icon-btn{width:30px;height:30px;border:none;background:transparent;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ink2);}
+.section-label{font-size:11px;font-weight:700;color:var(--ink2);padding:16px 18px 4px;}
+.confirm-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px;}
+.confirm-overlay.show{display:flex;}
+.confirm-box{background:#fff;border-radius:18px;padding:28px 24px 20px;width:100%;max-width:320px;text-align:center;}
+.confirm-icon{font-size:36px;margin-bottom:10px;}
+.confirm-title{font-size:17px;font-weight:700;margin-bottom:6px;}
+.confirm-msg{font-size:14px;color:var(--ink2);margin-bottom:20px;line-height:1.5;}
+.confirm-btns{display:flex;gap:10px;}
+.confirm-btns button{flex:1;padding:12px;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.btn-cancel{background:var(--done-bg);color:var(--ink2);}
+.btn-ok{background:var(--check);color:#fff;}
+.btn-danger{background:#e03a2e;color:#fff;}
+.overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:flex-end;justify-content:center;}
+.overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:22px 22px 0 0;padding:20px 20px 50px;width:100%;max-width:480px;}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:18px;}
+.form-label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--ink2);}
+.form-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);margin-bottom:14px;-webkit-appearance:none;box-sizing:border-box;}
+.row2{display:flex;gap:10px;}
+.row2>div{flex:1;}
+.priority-toggle{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.toggle-track{width:46px;height:26px;background:var(--border);border-radius:13px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle-track.on{background:var(--priority-dot);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.toggle-track.on .toggle-knob{transform:translateX(20px);}
+.priority-label{font-size:15px;font-weight:500;}
+.btn-save{width:100%;padding:15px;background:var(--ink);color:#fff;font-size:16px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.empty{text-align:center;padding:60px 0 20px;color:var(--ink2);font-size:15px;line-height:1.8;}
+.empty-icon{font-size:40px;margin-bottom:10px;}
+.data-btn{width:40px;height:40px;border-radius:50%;background:var(--card);border:1.5px solid var(--border);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.data-btn:active{transform:scale(.92);}
+.backup-banner{display:none;margin:0 18px 6px;padding:12px 14px;background:#fff4ed;border:1.5px solid var(--cat-family);border-radius:12px;}
+.backup-banner.show{display:block;}
+.backup-banner .bb-txt{font-size:13px;font-weight:600;color:#b3501f;margin-bottom:8px;line-height:1.5;}
+.backup-banner .bb-btn{width:100%;padding:11px;border:none;border-radius:9px;background:var(--cat-family);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;}
+.data-row{display:flex;flex-direction:column;gap:10px;}
+.data-action{width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--ink);text-align:center;display:block;}
+.data-action.primary{background:var(--check);color:#fff;border-color:transparent;}
+.snap-item{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;}
+.snap-restore{background:var(--check);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;}
+.lastbk{font-size:11px;color:var(--ink2);margin-top:12px;text-align:center;}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#2ba57a;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:500;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:80%;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-row">
+    <h1>📋 タスク</h1>
+    <div class="header-right">
+      <button class="data-btn" id="dataBtn">💾</button>
+      <div class="counts"><b id="doneCount">0</b> / <b id="totalCount">0</b> 完了</div>
+      <button class="add-btn" id="fabBtn">＋</button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="all">すべて</button>
+    <button class="tab" data-cat="仕事">💼 仕事</button>
+    <button class="tab" data-cat="家族">👨‍👩‍👧 家族</button>
+    <button class="tab" data-cat="車">🚗 車</button>
+    <button class="tab" data-cat="お金">💴 お金</button>
+    <button class="tab" data-cat="その他">📦 その他</button>
+  </div>
+</header>
+
+<div class="backup-banner" id="bkBanner">
+  <div class="bb-txt">📦 大切なデータを守るため、バックアップ（保存）しましょう。<br>保存先は「ファイル」や「iCloud」がおすすめです。</div>
+  <button class="bb-btn" id="bannerBackupBtn">今すぐバックアップする</button>
+</div>
+
+<div id="taskArea"></div>
+
+<!-- 完了確認 -->
+<div class="confirm-overlay" id="doneOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">✅</div>
+    <div class="confirm-title">タスク完了</div>
+    <div class="confirm-msg" id="doneMsgText"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" id="doneCancelBtn">キャンセル</button>
+      <button class="btn-ok" id="doneOkBtn">完了にする</button>
+    </div>
+  </div>
+</div>
+
+<!-- 削除確認 -->
+<div class="confirm-overlay" id="deleteOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">タスクを削除</div>
+    <div class="confirm-msg" id="deleteMsgText"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" id="deleteCancelBtn">キャンセル</button>
+      <button class="btn-danger" id="deleteOkBtn">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 追加/編集モーダル -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">タスクを追加</h2>
+    <label class="form-label">タスク名</label>
+    <input type="text" class="form-input" id="inp_title" placeholder="例：コイキ学費支払い">
+    <div class="row2">
+      <div>
+        <label class="form-label">カテゴリ</label>
+        <select class="form-input" id="inp_cat">
+          <option value="仕事">💼 仕事</option>
+          <option value="家族">👨‍👩‍👧 家族</option>
+          <option value="車">🚗 車</option>
+          <option value="お金">💴 お金</option>
+          <option value="その他" selected>📦 その他</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">期限日（任意）</label>
+        <input type="date" class="form-input" id="inp_date">
+      </div>
+    </div>
+    <div class="priority-toggle">
+      <div class="toggle-track" id="priToggle"><div class="toggle-knob"></div></div>
+      <span class="priority-label">🔴 重要（優先）</span>
+    </div>
+    <button class="btn-save" id="saveBtn">追加する</button>
+  </div>
+</div>
+
+<!-- データ保存・復元 -->
+<div class="overlay" id="dataOverlay">
+  <div class="modal">
+    <h2>💾 データの保存・復元</h2>
+    <div class="data-row">
+      <button class="data-action primary" id="exportBtn">📥 バックアップを保存（書き出し）</button>
+      <label class="data-action">📤 ファイルから復元（読み込み）<input type="file" accept=".json" id="importInput" style="display:none"></label>
+      <button class="data-action" id="snapBtn">⏱ 自動保存から復元する</button>
+    </div>
+    <div class="lastbk" id="lastbkTxt"></div>
+  </div>
+</div>
+
+<!-- 自動保存から復元 -->
+<div class="overlay" id="snapOverlay">
+  <div class="modal">
+    <h2>⏱ 自動保存から復元</h2>
+    <div id="snapList"></div>
+    <button class="btn-save" id="snapCloseBtn" style="margin-top:10px;background:var(--done-bg);color:var(--ink2);">閉じる</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SKEY='tasks_miyarn_v3';
+function loadTasks(){try{const s=localStorage.getItem(SKEY);if(s)return JSON.parse(s);}catch(e){}return[];}
+function saveTasks(){try{localStorage.setItem(SKEY,JSON.stringify(tasks));}catch(e){}snapshot();}
+let tasks=loadTasks();
+let nextId=tasks.length?Math.max(...tasks.map(t=>t.id))+1:1;
+let activeFilter='all';
+let editingId=null;
+let priOn=false;
+let confirmingDoneId=null;
+let confirmingDeleteId=null;
+
+const cc=c=>({仕事:'work',家族:'family',車:'car',お金:'money',その他:'other'}[c]||'other');
+
+function dlTag(d){
+  if(!d)return'';
+  const dt=new Date(d+'T00:00:00'),today=new Date();
+  today.setHours(0,0,0,0);
+  const diff=Math.round((dt-today)/86400000);
+  const lb=`${dt.getMonth()+1}/${dt.getDate()}`;
+  if(diff<0)return`<span class="deadline over">⚠ ${lb} 期限切れ</span>`;
+  if(diff===0)return`<span class="deadline over">🔴 本日期限</span>`;
+  if(diff<=3)return`<span class="deadline over">📅 ${lb} あと${diff}日</span>`;
+  return`<span class="deadline">📅 ${lb}</span>`;
+}
+
+function card(t){
+  return`<div class="task${t.priority?' priority':''}${t.done?' done':''}" data-id="${t.id}">
+    <button class="check-btn" data-action="toggle" data-id="${t.id}">
+      ${t.done?'<svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5L5.5 9.5L13 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+    </button>
+    <div class="task-body">
+      <div class="task-title">${t.title}</div>
+      <div class="task-meta">
+        <span class="badge ${cc(t.cat)}">${t.cat}</span>
+        ${t.priority&&!t.done?'<span class="priority-tag">🔴 重要</span>':''}
+        ${dlTag(t.deadline)}
+      </div>
+    </div>
+    <div class="task-actions">
+      <button class="icon-btn" data-action="edit" data-id="${t.id}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="icon-btn" data-action="delete" data-id="${t.id}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const area=document.getElementById('taskArea');
+  let f=activeFilter==='all'?tasks:tasks.filter(t=>t.cat===activeFilter);
+  const todo=f.filter(t=>!t.done).sort((a,b)=>(b.priority?1:0)-(a.priority?1:0));
+  const done=f.filter(t=>t.done);
+  let h='';
+  if(!todo.length&&!done.length){
+    h='<div class="empty"><div class="empty-icon">🎉</div>タスクがありません<br>右上の＋で追加！</div>';
+  } else {
+    if(todo.length){h+=`<div class="section-label">未完了 ${todo.length}件</div><div class="list">`;todo.forEach(t=>{h+=card(t);});h+='</div>';}
+    if(done.length){h+=`<div class="section-label">完了済み ${done.length}件</div><div class="list">`;done.forEach(t=>{h+=card(t);});h+='</div>';}
+  }
+  area.innerHTML=h;
+  document.getElementById('doneCount').textContent=tasks.filter(t=>t.done).length;
+  document.getElementById('totalCount').textContent=tasks.length;
+  if(typeof refreshBanner==='function')refreshBanner();
+}
+
+document.getElementById('taskArea').addEventListener('click',function(e){
+  const btn=e.target.closest('[data-action]');
+  if(!btn)return;
+  const id=Number(btn.dataset.id);
+  const action=btn.dataset.action;
+  if(action==='toggle')handleToggle(id);
+  else if(action==='edit')openEdit(id);
+  else if(action==='delete')openDeleteConfirm(id);
+});
+
+function handleToggle(id){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return;
+  if(!t.done){
+    confirmingDoneId=id;
+    document.getElementById('doneMsgText').textContent=`「${t.title}」を完了にしますか？`;
+    document.getElementById('doneOverlay').classList.add('show');
+  } else {
+    t.done=false;saveTasks();render();
+  }
+}
+
+document.getElementById('doneOkBtn').addEventListener('click',function(){
+  const t=tasks.find(x=>x.id===confirmingDoneId);
+  if(t){t.done=true;saveTasks();render();}
+  document.getElementById('doneOverlay').classList.remove('show');
+  confirmingDoneId=null;
+});
+document.getElementById('doneCancelBtn').addEventListener('click',function(){
+  document.getElementById('doneOverlay').classList.remove('show');confirmingDoneId=null;
+});
+document.getElementById('doneOverlay').addEventListener('click',function(e){
+  if(e.target===this){this.classList.remove('show');confirmingDoneId=null;}
+});
+
+function openDeleteConfirm(id){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return;
+  confirmingDeleteId=id;
+  document.getElementById('deleteMsgText').textContent=`「${t.title}」を削除しますか？`;
+  document.getElementById('deleteOverlay').classList.add('show');
+}
+document.getElementById('deleteOkBtn').addEventListener('click',function(){
+  tasks=tasks.filter(x=>x.id!==confirmingDeleteId);
+  saveTasks();render();
+  document.getElementById('deleteOverlay').classList.remove('show');
+  confirmingDeleteId=null;
+});
+document.getElementById('deleteCancelBtn').addEventListener('click',function(){
+  document.getElementById('deleteOverlay').classList.remove('show');confirmingDeleteId=null;
+});
+document.getElementById('deleteOverlay').addEventListener('click',function(e){
+  if(e.target===this){this.classList.remove('show');confirmingDeleteId=null;}
+});
+
+document.getElementById('tabs').addEventListener('click',function(e){
+  const tab=e.target.closest('.tab');
+  if(!tab)return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  activeFilter=tab.dataset.cat;
+  render();
+});
+
+function openAdd(){
+  editingId=null;priOn=false;
+  document.getElementById('inp_title').value='';
+  document.getElementById('inp_cat').value='その他';
+  document.getElementById('inp_date').value='';
+  document.getElementById('priToggle').classList.remove('on');
+  document.getElementById('modalTitle').textContent='タスクを追加';
+  document.getElementById('saveBtn').textContent='追加する';
+  document.getElementById('overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('inp_title').focus(),300);
+}
+
+function openEdit(id){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return;
+  editingId=id;priOn=t.priority;
+  document.getElementById('inp_title').value=t.title;
+  document.getElementById('inp_cat').value=t.cat;
+  document.getElementById('inp_date').value=t.deadline;
+  document.getElementById('priToggle').classList.toggle('on',priOn);
+  document.getElementById('modalTitle').textContent='タスクを編集';
+  document.getElementById('saveBtn').textContent='保存する';
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeModal(){document.getElementById('overlay').classList.remove('show');}
+
+document.getElementById('priToggle').addEventListener('click',function(){
+  priOn=!priOn;this.classList.toggle('on',priOn);
+});
+document.getElementById('saveBtn').addEventListener('click',saveTask);
+document.getElementById('inp_title').addEventListener('keydown',function(e){if(e.key==='Enter')saveTask();});
+
+function saveTask(){
+  const title=document.getElementById('inp_title').value.trim();
+  if(!title){document.getElementById('inp_title').focus();return;}
+  const cat=document.getElementById('inp_cat').value;
+  const deadline=document.getElementById('inp_date').value;
+  if(editingId!==null){
+    const t=tasks.find(x=>x.id===editingId);
+    if(t)Object.assign(t,{title,cat,deadline,priority:priOn});
+  } else {
+    tasks.unshift({id:nextId++,title,cat,deadline,priority:priOn,done:false});
+  }
+  saveTasks();closeModal();render();
+}
+
+document.getElementById('fabBtn').addEventListener('click',openAdd);
+document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ====================================================
+// 自動バックアップ / 書き出し・読み込み
+// ====================================================
+const BKEY=SKEY+'_backups', LXKEY=SKEY+'_lastexp';
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function getSnaps(){try{return JSON.parse(localStorage.getItem(BKEY))||[];}catch(e){return[];}}
+function snapshot(){try{const json=JSON.stringify(tasks);const list=getSnaps();if(list[0]&&list[0].json===json)return;list.unshift({at:new Date().toISOString(),json});if(list.length>15)list.length=15;localStorage.setItem(BKEY,JSON.stringify(list));}catch(e){}}
+function fmtAt(iso){const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function setLastExport(){try{localStorage.setItem(LXKEY,new Date().toISOString());}catch(e){}updateLastBk();refreshBanner();}
+function bkStale(){const l=localStorage.getItem(LXKEY);if(!l)return tasks.length>0;return(Date.now()-new Date(l).getTime())>3*86400000;}
+function refreshBanner(){document.getElementById('bkBanner').classList.toggle('show',bkStale());}
+function updateLastBk(){const l=localStorage.getItem(LXKEY);document.getElementById('lastbkTxt').textContent=l?('前回のバックアップ保存：'+fmtAt(l)):'まだ一度もバックアップを保存していません';}
+
+function openData(){updateLastBk();document.getElementById('dataOverlay').classList.add('show');}
+function closeData(){document.getElementById('dataOverlay').classList.remove('show');}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify({tasks},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='tasks-backup.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  setLastExport();closeData();toast('✅ バックアップを保存しました');
+}
+function importData(file){
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{const data=JSON.parse(ev.target.result);const arr=Array.isArray(data)?data:data.tasks;if(!Array.isArray(arr))throw new Error();
+      tasks=arr;nextId=tasks.length?Math.max(...tasks.map(t=>t.id||0))+1:1;saveTasks();render();closeData();toast('✅ データを復元しました！');}
+    catch(e){toast('❌ 読み込みに失敗しました');}
+  };
+  reader.readAsText(file);
+}
+function openSnaps(){
+  const list=getSnaps();const el=document.getElementById('snapList');
+  if(!list.length){el.innerHTML='<div style="text-align:center;color:var(--ink2);padding:20px 0;font-size:13px">まだ自動保存がありません</div>';}
+  else{el.innerHTML=list.map((s,i)=>{let cnt=0;try{cnt=JSON.parse(s.json).length;}catch(e){}return`<div class="snap-item"><div><div style="font-size:12px;color:var(--ink2)">${fmtAt(s.at)}</div>${cnt}件</div><button class="snap-restore" onclick="restoreSnap(${i})">復元</button></div>`;}).join('');}
+  document.getElementById('snapOverlay').classList.add('show');
+}
+function restoreSnap(i){
+  const list=getSnaps();const s=list[i];if(!s)return;
+  if(!confirm('この時点のデータに復元しますか？\n（今のデータは置き換わります）'))return;
+  try{tasks=JSON.parse(s.json);nextId=tasks.length?Math.max(...tasks.map(t=>t.id||0))+1:1;saveTasks();render();document.getElementById('snapOverlay').classList.remove('show');closeData();toast('✅ 復元しました');}
+  catch(e){toast('❌ 復元に失敗しました');}
+}
+
+document.getElementById('dataBtn').addEventListener('click',openData);
+document.getElementById('bannerBackupBtn').addEventListener('click',exportData);
+document.getElementById('exportBtn').addEventListener('click',exportData);
+document.getElementById('importInput').addEventListener('change',function(e){const f=e.target.files[0];if(f)importData(f);e.target.value='';});
+document.getElementById('snapBtn').addEventListener('click',openSnaps);
+document.getElementById('snapCloseBtn').addEventListener('click',()=>document.getElementById('snapOverlay').classList.remove('show'));
+document.getElementById('dataOverlay').addEventListener('click',function(e){if(e.target===this)closeData();});
+document.getElementById('snapOverlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+
+snapshot();
+updateLastBk();
+refreshBanner();
+render();
+</script>
+</body>
+</html>
