@@ -361,7 +361,39 @@ function clearData() {
   localStorage.removeItem('uketsuke_card');
 }
 
-window.onload = loadData;
+// ===== 自動フォント縮小 =====
+// 対象：短いテキスト入力欄（ナンバー、車種、F No.、E/N、初年度、走行K、型式指定、類別区分、タイヤ溝、ライニング、有効期限、作業行の各欄）
+const autoShrinkIds = [
+  'number','cartype','fno','en','year','mileage',
+  'rental','model','category','tyre','lining','expiry'
+];
+for (let i = 1; i <= 18; i++) {
+  autoShrinkIds.push(`w_inst${i}`,`w_cont${i}`,`w_date${i}`,`w_part${i}`,`w_qty${i}`,`w_price${i}`);
+}
+
+function shrinkToFit(input) {
+  const minSize = 6;   // 最小フォントサイズ(px)
+  const maxSize = 10;  // 通常フォントサイズ(px)
+  input.style.fontSize = maxSize + 'px';
+  while (input.scrollWidth > input.clientWidth && parseFloat(input.style.fontSize) > minSize) {
+    input.style.fontSize = (parseFloat(input.style.fontSize) - 0.5) + 'px';
+  }
+}
+
+function setupShrink() {
+  autoShrinkIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => shrinkToFit(el));
+    // 保存データ復元後にも適用
+    shrinkToFit(el);
+  });
+}
+
+window.onload = function() {
+  loadData();
+  setupShrink();
+};
 </script>
 </body>
 </html>
