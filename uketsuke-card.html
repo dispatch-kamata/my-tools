@@ -72,80 +72,65 @@ td, th {
   background: #f0f0f0;
   text-align: center;
   white-space: nowrap;
-  font-size: 9.5px;
+  font-size: 9px;
 }
 
-/* 共通inputスタイル */
-input[type="text"],
-input[type="date"],
-input[type="number"] {
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 10px;
-  font-family: inherit;
-  color: #111;
-  padding: 0 1px;
-}
-
-/* 折り返し対応テキストエリア */
-textarea.auto {
+/* 入力欄共通：1行表示、はみ出したら自動縮小 */
+.cell-input {
   display: block;
   width: 100%;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 10px;
   font-family: inherit;
   color: #111;
   padding: 0 1px;
-  resize: none;
-  overflow: hidden;
+  font-size: 9px;
   line-height: 1.4;
-  min-height: 15px;
-  height: 15px;
-  white-space: pre-wrap;
+  /* 最大2行分の高さ */
+  max-height: 2.8em;
+  overflow: hidden;
+  resize: none;
   word-break: break-all;
+  white-space: pre-wrap;
 }
 
-/* 依頼内容テキストエリア（大きいやつ） */
+/* 依頼内容は大きめ */
 textarea#request {
+  display: block;
   width: 100%;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 10px;
   font-family: inherit;
+  font-size: 9px;
   color: #111;
   padding: 0 1px;
   resize: none;
-  overflow: hidden;
   height: 86px;
+  overflow: auto;
 }
 
-input:focus, textarea:focus { background: #fffde7; border-radius: 2px; }
+textarea:focus, input:focus { background: #fffde7; border-radius: 2px; }
 
 .h22 td { height: 22px; }
-.h18 td { height: 18px; }
 
 .work-table th {
   background: #e8e8e8;
   text-align: center;
-  font-size: 9.5px;
+  font-size: 9px;
   height: 20px;
   letter-spacing: 0.05em;
 }
 .work-table td {
-  min-height: 17px;
-  vertical-align: top;
+  height: 20px;
+  vertical-align: middle;
   padding: 1px 3px;
 }
-.work-table textarea.auto { font-size: 9.5px; }
 
 .code-table td {
   text-align: center;
-  font-size: 9.5px;
+  font-size: 9px;
   height: 18px;
 }
 
@@ -161,7 +146,6 @@ input:focus, textarea:focus { background: #fffde7; border-radius: 2px; }
     border: none;
     box-shadow: none;
   }
-  textarea, input { font-size: 9.5px !important; }
 }
 
 @media (max-width: 640px) {
@@ -193,23 +177,23 @@ input:focus, textarea:focus { background: #fffde7; border-radius: 2px; }
     </colgroup>
     <tr>
       <td class="lbl">ナンバー</td>
-      <td><textarea class="auto" id="number"></textarea></td>
-      <td class="lbl" style="font-size:9px;">車<br>種</td>
-      <td><textarea class="auto" id="cartype"></textarea></td>
-      <td class="lbl" style="font-size:9px;">F<br>No.</td>
-      <td><textarea class="auto" id="fno"></textarea></td>
-      <td class="lbl" style="font-size:9px;">E<br>N</td>
-      <td><textarea class="auto" id="en"></textarea></td>
+      <td><textarea class="cell-input" id="number"></textarea></td>
+      <td class="lbl" style="font-size:8px;">車<br>種</td>
+      <td><textarea class="cell-input" id="cartype"></textarea></td>
+      <td class="lbl" style="font-size:8px;">F<br>No.</td>
+      <td><textarea class="cell-input" id="fno"></textarea></td>
+      <td class="lbl" style="font-size:8px;">E<br>N</td>
+      <td><textarea class="cell-input" id="en"></textarea></td>
       <td class="lbl">初年度</td>
-      <td><textarea class="auto" id="year" placeholder="例：R3.4"></textarea></td>
+      <td><textarea class="cell-input" id="year" placeholder="例：R3.4"></textarea></td>
     </tr>
     <tr>
       <td class="lbl">顧客名</td>
-      <td colspan="3"><textarea class="auto" id="customer"></textarea></td>
+      <td colspan="3"><textarea class="cell-input" id="customer"></textarea></td>
       <td class="lbl">住所</td>
-      <td colspan="3"><textarea class="auto" id="address"></textarea></td>
+      <td colspan="3"><textarea class="cell-input" id="address"></textarea></td>
       <td class="lbl">走行K</td>
-      <td><textarea class="auto" id="mileage"></textarea></td>
+      <td><textarea class="cell-input" id="mileage"></textarea></td>
     </tr>
   </table>
 
@@ -220,14 +204,14 @@ input:focus, textarea:focus { background: #fffde7; border-radius: 2px; }
       <col style="width:9%"><col style="width:17%">
     </colgroup>
     <tr>
-      <td class="lbl" style="letter-spacing:0.15em; font-size:9.5px; height:18px;">お客様依頼事項</td>
+      <td class="lbl" style="letter-spacing:0.1em; height:18px;">お客様依頼事項</td>
       <td colspan="3" style="height:18px;">
         <table style="border:none; width:100%;">
           <tr>
             <td style="border:none; width:18%; padding:0;" class="lbl">代車</td>
-            <td style="border:none; width:32%; padding:0 4px;"><textarea class="auto" id="rental"></textarea></td>
+            <td style="border:none; width:32%; padding:0 4px;"><textarea class="cell-input" id="rental"></textarea></td>
             <td style="border:none; width:20%; padding:0;" class="lbl">型式指定</td>
-            <td style="border:none; width:30%; padding:0 4px;"><textarea class="auto" id="model"></textarea></td>
+            <td style="border:none; width:30%; padding:0 4px;"><textarea class="cell-input" id="model"></textarea></td>
           </tr>
         </table>
       </td>
@@ -240,32 +224,32 @@ input:focus, textarea:focus { background: #fffde7; border-radius: 2px; }
         <table style="border:none; width:100%; height:100%;">
           <tr style="height:18px;">
             <td class="lbl" style="border:1px solid #555; width:35%;">自賠責</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="auto" id="jibaiseki"></textarea></td>
+            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="jibaiseki"></textarea></td>
           </tr>
           <tr style="height:18px;">
             <td class="lbl" style="border:1px solid #555;">重量税</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="auto" id="jyuryo"></textarea></td>
+            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="jyuryo"></textarea></td>
           </tr>
           <tr style="height:18px;">
             <td class="lbl" style="border:1px solid #555;">印紙</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="auto" id="inshi"></textarea></td>
+            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="inshi"></textarea></td>
           </tr>
           <tr style="height:18px;">
             <td class="lbl" style="border:1px solid #555;">リサイクル料</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="auto" id="recycle"></textarea></td>
+            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="recycle"></textarea></td>
           </tr>
         </table>
       </td>
       <td class="lbl" style="height:18px;">類別区分</td>
-      <td><textarea class="auto" id="category"></textarea></td>
+      <td><textarea class="cell-input" id="category"></textarea></td>
     </tr>
     <tr style="height:18px;">
       <td class="lbl">タイヤの溝</td>
-      <td><textarea class="auto" id="tyre"></textarea></td>
+      <td><textarea class="cell-input" id="tyre"></textarea></td>
     </tr>
     <tr style="height:18px;">
       <td class="lbl">ライニング残存</td>
-      <td><textarea class="auto" id="lining"></textarea></td>
+      <td><textarea class="cell-input" id="lining"></textarea></td>
     </tr>
     <tr style="height:18px;"><td></td><td></td></tr>
   </table>
@@ -285,24 +269,24 @@ input:focus, textarea:focus { background: #fffde7; border-radius: 2px; }
       <th>数量</th>
       <th>単　価</th>
     </tr>
-    <tr><td><textarea class="auto" id="w_inst1"></textarea></td><td><textarea class="auto" id="w_cont1"></textarea></td><td><textarea class="auto" id="w_date1"></textarea></td><td><textarea class="auto" id="w_part1"></textarea></td><td><textarea class="auto" id="w_qty1"></textarea></td><td><textarea class="auto" id="w_price1"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst2"></textarea></td><td><textarea class="auto" id="w_cont2"></textarea></td><td><textarea class="auto" id="w_date2"></textarea></td><td><textarea class="auto" id="w_part2"></textarea></td><td><textarea class="auto" id="w_qty2"></textarea></td><td><textarea class="auto" id="w_price2"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst3"></textarea></td><td><textarea class="auto" id="w_cont3"></textarea></td><td><textarea class="auto" id="w_date3"></textarea></td><td><textarea class="auto" id="w_part3"></textarea></td><td><textarea class="auto" id="w_qty3"></textarea></td><td><textarea class="auto" id="w_price3"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst4"></textarea></td><td><textarea class="auto" id="w_cont4"></textarea></td><td><textarea class="auto" id="w_date4"></textarea></td><td><textarea class="auto" id="w_part4"></textarea></td><td><textarea class="auto" id="w_qty4"></textarea></td><td><textarea class="auto" id="w_price4"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst5"></textarea></td><td><textarea class="auto" id="w_cont5"></textarea></td><td><textarea class="auto" id="w_date5"></textarea></td><td><textarea class="auto" id="w_part5"></textarea></td><td><textarea class="auto" id="w_qty5"></textarea></td><td><textarea class="auto" id="w_price5"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst6"></textarea></td><td><textarea class="auto" id="w_cont6"></textarea></td><td><textarea class="auto" id="w_date6"></textarea></td><td><textarea class="auto" id="w_part6"></textarea></td><td><textarea class="auto" id="w_qty6"></textarea></td><td><textarea class="auto" id="w_price6"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst7"></textarea></td><td><textarea class="auto" id="w_cont7"></textarea></td><td><textarea class="auto" id="w_date7"></textarea></td><td><textarea class="auto" id="w_part7"></textarea></td><td><textarea class="auto" id="w_qty7"></textarea></td><td><textarea class="auto" id="w_price7"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst8"></textarea></td><td><textarea class="auto" id="w_cont8"></textarea></td><td><textarea class="auto" id="w_date8"></textarea></td><td><textarea class="auto" id="w_part8"></textarea></td><td><textarea class="auto" id="w_qty8"></textarea></td><td><textarea class="auto" id="w_price8"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst9"></textarea></td><td><textarea class="auto" id="w_cont9"></textarea></td><td><textarea class="auto" id="w_date9"></textarea></td><td><textarea class="auto" id="w_part9"></textarea></td><td><textarea class="auto" id="w_qty9"></textarea></td><td><textarea class="auto" id="w_price9"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst10"></textarea></td><td><textarea class="auto" id="w_cont10"></textarea></td><td><textarea class="auto" id="w_date10"></textarea></td><td><textarea class="auto" id="w_part10"></textarea></td><td><textarea class="auto" id="w_qty10"></textarea></td><td><textarea class="auto" id="w_price10"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst11"></textarea></td><td><textarea class="auto" id="w_cont11"></textarea></td><td><textarea class="auto" id="w_date11"></textarea></td><td><textarea class="auto" id="w_part11"></textarea></td><td><textarea class="auto" id="w_qty11"></textarea></td><td><textarea class="auto" id="w_price11"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst12"></textarea></td><td><textarea class="auto" id="w_cont12"></textarea></td><td><textarea class="auto" id="w_date12"></textarea></td><td><textarea class="auto" id="w_part12"></textarea></td><td><textarea class="auto" id="w_qty12"></textarea></td><td><textarea class="auto" id="w_price12"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst13"></textarea></td><td><textarea class="auto" id="w_cont13"></textarea></td><td><textarea class="auto" id="w_date13"></textarea></td><td><textarea class="auto" id="w_part13"></textarea></td><td><textarea class="auto" id="w_qty13"></textarea></td><td><textarea class="auto" id="w_price13"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst14"></textarea></td><td><textarea class="auto" id="w_cont14"></textarea></td><td><textarea class="auto" id="w_date14"></textarea></td><td><textarea class="auto" id="w_part14"></textarea></td><td><textarea class="auto" id="w_qty14"></textarea></td><td><textarea class="auto" id="w_price14"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst15"></textarea></td><td><textarea class="auto" id="w_cont15"></textarea></td><td><textarea class="auto" id="w_date15"></textarea></td><td><textarea class="auto" id="w_part15"></textarea></td><td><textarea class="auto" id="w_qty15"></textarea></td><td><textarea class="auto" id="w_price15"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst16"></textarea></td><td><textarea class="auto" id="w_cont16"></textarea></td><td><textarea class="auto" id="w_date16"></textarea></td><td><textarea class="auto" id="w_part16"></textarea></td><td><textarea class="auto" id="w_qty16"></textarea></td><td><textarea class="auto" id="w_price16"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst17"></textarea></td><td><textarea class="auto" id="w_cont17"></textarea></td><td><textarea class="auto" id="w_date17"></textarea></td><td><textarea class="auto" id="w_part17"></textarea></td><td><textarea class="auto" id="w_qty17"></textarea></td><td><textarea class="auto" id="w_price17"></textarea></td></tr>
-    <tr><td><textarea class="auto" id="w_inst18"></textarea></td><td><textarea class="auto" id="w_cont18"></textarea></td><td><textarea class="auto" id="w_date18"></textarea></td><td><textarea class="auto" id="w_part18"></textarea></td><td><textarea class="auto" id="w_qty18"></textarea></td><td><textarea class="auto" id="w_price18"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst1"></textarea></td><td><textarea class="cell-input" id="w_cont1"></textarea></td><td><textarea class="cell-input" id="w_date1"></textarea></td><td><textarea class="cell-input" id="w_part1"></textarea></td><td><textarea class="cell-input" id="w_qty1"></textarea></td><td><textarea class="cell-input" id="w_price1"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst2"></textarea></td><td><textarea class="cell-input" id="w_cont2"></textarea></td><td><textarea class="cell-input" id="w_date2"></textarea></td><td><textarea class="cell-input" id="w_part2"></textarea></td><td><textarea class="cell-input" id="w_qty2"></textarea></td><td><textarea class="cell-input" id="w_price2"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst3"></textarea></td><td><textarea class="cell-input" id="w_cont3"></textarea></td><td><textarea class="cell-input" id="w_date3"></textarea></td><td><textarea class="cell-input" id="w_part3"></textarea></td><td><textarea class="cell-input" id="w_qty3"></textarea></td><td><textarea class="cell-input" id="w_price3"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst4"></textarea></td><td><textarea class="cell-input" id="w_cont4"></textarea></td><td><textarea class="cell-input" id="w_date4"></textarea></td><td><textarea class="cell-input" id="w_part4"></textarea></td><td><textarea class="cell-input" id="w_qty4"></textarea></td><td><textarea class="cell-input" id="w_price4"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst5"></textarea></td><td><textarea class="cell-input" id="w_cont5"></textarea></td><td><textarea class="cell-input" id="w_date5"></textarea></td><td><textarea class="cell-input" id="w_part5"></textarea></td><td><textarea class="cell-input" id="w_qty5"></textarea></td><td><textarea class="cell-input" id="w_price5"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst6"></textarea></td><td><textarea class="cell-input" id="w_cont6"></textarea></td><td><textarea class="cell-input" id="w_date6"></textarea></td><td><textarea class="cell-input" id="w_part6"></textarea></td><td><textarea class="cell-input" id="w_qty6"></textarea></td><td><textarea class="cell-input" id="w_price6"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst7"></textarea></td><td><textarea class="cell-input" id="w_cont7"></textarea></td><td><textarea class="cell-input" id="w_date7"></textarea></td><td><textarea class="cell-input" id="w_part7"></textarea></td><td><textarea class="cell-input" id="w_qty7"></textarea></td><td><textarea class="cell-input" id="w_price7"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst8"></textarea></td><td><textarea class="cell-input" id="w_cont8"></textarea></td><td><textarea class="cell-input" id="w_date8"></textarea></td><td><textarea class="cell-input" id="w_part8"></textarea></td><td><textarea class="cell-input" id="w_qty8"></textarea></td><td><textarea class="cell-input" id="w_price8"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst9"></textarea></td><td><textarea class="cell-input" id="w_cont9"></textarea></td><td><textarea class="cell-input" id="w_date9"></textarea></td><td><textarea class="cell-input" id="w_part9"></textarea></td><td><textarea class="cell-input" id="w_qty9"></textarea></td><td><textarea class="cell-input" id="w_price9"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst10"></textarea></td><td><textarea class="cell-input" id="w_cont10"></textarea></td><td><textarea class="cell-input" id="w_date10"></textarea></td><td><textarea class="cell-input" id="w_part10"></textarea></td><td><textarea class="cell-input" id="w_qty10"></textarea></td><td><textarea class="cell-input" id="w_price10"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst11"></textarea></td><td><textarea class="cell-input" id="w_cont11"></textarea></td><td><textarea class="cell-input" id="w_date11"></textarea></td><td><textarea class="cell-input" id="w_part11"></textarea></td><td><textarea class="cell-input" id="w_qty11"></textarea></td><td><textarea class="cell-input" id="w_price11"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst12"></textarea></td><td><textarea class="cell-input" id="w_cont12"></textarea></td><td><textarea class="cell-input" id="w_date12"></textarea></td><td><textarea class="cell-input" id="w_part12"></textarea></td><td><textarea class="cell-input" id="w_qty12"></textarea></td><td><textarea class="cell-input" id="w_price12"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst13"></textarea></td><td><textarea class="cell-input" id="w_cont13"></textarea></td><td><textarea class="cell-input" id="w_date13"></textarea></td><td><textarea class="cell-input" id="w_part13"></textarea></td><td><textarea class="cell-input" id="w_qty13"></textarea></td><td><textarea class="cell-input" id="w_price13"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst14"></textarea></td><td><textarea class="cell-input" id="w_cont14"></textarea></td><td><textarea class="cell-input" id="w_date14"></textarea></td><td><textarea class="cell-input" id="w_part14"></textarea></td><td><textarea class="cell-input" id="w_qty14"></textarea></td><td><textarea class="cell-input" id="w_price14"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst15"></textarea></td><td><textarea class="cell-input" id="w_cont15"></textarea></td><td><textarea class="cell-input" id="w_date15"></textarea></td><td><textarea class="cell-input" id="w_part15"></textarea></td><td><textarea class="cell-input" id="w_qty15"></textarea></td><td><textarea class="cell-input" id="w_price15"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst16"></textarea></td><td><textarea class="cell-input" id="w_cont16"></textarea></td><td><textarea class="cell-input" id="w_date16"></textarea></td><td><textarea class="cell-input" id="w_part16"></textarea></td><td><textarea class="cell-input" id="w_qty16"></textarea></td><td><textarea class="cell-input" id="w_price16"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst17"></textarea></td><td><textarea class="cell-input" id="w_cont17"></textarea></td><td><textarea class="cell-input" id="w_date17"></textarea></td><td><textarea class="cell-input" id="w_part17"></textarea></td><td><textarea class="cell-input" id="w_qty17"></textarea></td><td><textarea class="cell-input" id="w_price17"></textarea></td></tr>
+    <tr><td><textarea class="cell-input" id="w_inst18"></textarea></td><td><textarea class="cell-input" id="w_cont18"></textarea></td><td><textarea class="cell-input" id="w_date18"></textarea></td><td><textarea class="cell-input" id="w_part18"></textarea></td><td><textarea class="cell-input" id="w_qty18"></textarea></td><td><textarea class="cell-input" id="w_price18"></textarea></td></tr>
   </table>
 
   <!-- 記号テーブル -->
@@ -318,27 +302,46 @@ input:focus, textarea:focus { background: #fffde7; border-radius: 2px; }
       <td></td><td>V</td><td>○</td><td>×</td><td>△</td>
       <td>A</td><td>T</td><td>C</td><td>L</td>
       <td>D</td><td>B</td><td>P</td>
-      <td colspan="2"><textarea class="auto" id="expiry" placeholder="例：R7.6.30"></textarea></td>
+      <td colspan="2"><textarea class="cell-input" id="expiry" placeholder="例：R7.6.30"></textarea></td>
     </tr>
   </table>
 
 </div>
 
 <script>
-// 自動高さ調整
-function autoResize(el) {
+// 自動フォント縮小（最大2行に収まるよう縮小）
+function shrinkToFit(el) {
+  const maxLines = 2;
+  const lineHeight = 1.4;
+  let fontSize = 9; // 開始サイズ
+  const minSize = 5;
+
+  el.style.fontSize = fontSize + 'px';
   el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
+
+  // フォントを縮小しながら2行以内に収める
+  while (fontSize > minSize) {
+    el.style.fontSize = fontSize + 'px';
+    const maxHeight = fontSize * lineHeight * maxLines;
+    if (el.scrollHeight <= maxHeight + 2) break;
+    fontSize -= 0.5;
+  }
 }
 
-function setupAutoResize() {
-  document.querySelectorAll('textarea.auto').forEach(el => {
-    el.addEventListener('input', () => autoResize(el));
-    autoResize(el);
+function setupInputs() {
+  document.querySelectorAll('textarea.cell-input').forEach(el => {
+    // 初期高さ：1行分
+    el.style.height = (9 * 1.4) + 'px';
+    el.addEventListener('input', () => {
+      el.style.height = 'auto';
+      shrinkToFit(el);
+      // 高さを2行分に固定
+      const fs = parseFloat(el.style.fontSize);
+      el.style.height = (fs * 1.4 * 2) + 'px';
+    });
   });
 }
 
-// 全ID取得
 function getAllIds() {
   const ids = [
     'number','cartype','fno','en','year',
@@ -369,7 +372,10 @@ function loadData() {
   const data = JSON.parse(raw);
   getAllIds().forEach(id => {
     const el = document.getElementById(id);
-    if (el && data[id] !== undefined) el.value = data[id];
+    if (el && data[id] !== undefined) {
+      el.value = data[id];
+      if (el.classList.contains('cell-input')) shrinkToFit(el);
+    }
   });
 }
 
@@ -383,8 +389,8 @@ function clearData() {
 }
 
 window.onload = function() {
+  setupInputs();
   loadData();
-  setupAutoResize();
 };
 </script>
 </body>
