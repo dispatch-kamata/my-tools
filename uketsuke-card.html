@@ -34,6 +34,7 @@ button {
 .btn-print { background: #1565c0; color: #fff; }
 .btn-clear { background: #e53935; color: #fff; }
 .btn-save  { background: #2e7d32; color: #fff; }
+.btn-load  { background: #6a1b9a; color: #fff; padding: 8px 20px; font-size: 13px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; display: inline-block; }
 
 .page {
   background: #fff;
@@ -158,7 +159,8 @@ textarea:focus, input:focus { background: #fffde7; border-radius: 2px; }
 
 <div class="btn-row">
   <button class="btn-print" onclick="window.print()">🖨️ 印刷</button>
-  <button class="btn-save"  onclick="saveData()">💾 保存</button>
+  <button class="btn-save"  onclick="saveToFile()">💾 保存</button>
+  <label class="btn-load"><input type="file" id="loadInput" accept=".json" onchange="loadFromFile(event)" style="display:none">📂 読込</label>
   <button class="btn-clear" onclick="clearData()">🗑️ クリア</button>
 </div>
 
@@ -356,27 +358,49 @@ function getAllIds() {
   return ids;
 }
 
-function saveData() {
+// ===== ファイルに保存 =====
+function saveToFile() {
   const data = {};
   getAllIds().forEach(id => {
     const el = document.getElementById(id);
     if (el) data[id] = el.value;
   });
-  localStorage.setItem('uketsuke_card', JSON.stringify(data));
-  alert('✅ 保存しました！');
+  const json = JSON.stringify(data, null, 2);
+  const now = new Date();
+  const ts = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2)
+           + '_' + ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2);
+  const filename = '受付カード_' + ts + '.json';
+  const blob = new Blob([json], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
-function loadData() {
-  const raw = localStorage.getItem('uketsuke_card');
-  if (!raw) return;
-  const data = JSON.parse(raw);
-  getAllIds().forEach(id => {
-    const el = document.getElementById(id);
-    if (el && data[id] !== undefined) {
-      el.value = data[id];
-      if (el.classList.contains('cell-input')) shrinkToFit(el);
+// ===== ファイルから読込 =====
+function loadFromFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      getAllIds().forEach(id => {
+        const el = document.getElementById(id);
+        if (el && data[id] !== undefined) {
+          el.value = data[id];
+          if (el.classList.contains('cell-input')) shrinkToFit(el);
+        }
+      });
+      alert('✅ 読み込みました！');
+    } catch(err) {
+      alert('❌ ファイルの読み込みに失敗しました');
     }
-  });
+  };
+  reader.readAsText(file);
+  // 同じファイルを再度選べるようリセット
+  event.target.value = '';
 }
 
 function clearData() {
@@ -385,12 +409,10 @@ function clearData() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  localStorage.removeItem('uketsuke_card');
 }
 
 window.onload = function() {
   setupInputs();
-  loadData();
 };
 </script>
 </body>
