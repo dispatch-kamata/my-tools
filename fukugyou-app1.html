@@ -41,6 +41,11 @@ textarea.form-input{resize:vertical;min-height:52px;}
 .selected-display{background:var(--surface2);border:2px solid var(--accent);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between;}
 .selected-display.visible{display:flex;}
 .selected-name{font-size:14px;font-weight:600;color:var(--accent);}
+.sel-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:8px;}
+.sel-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.1);border:1.5px solid var(--accent);color:var(--accent);border-radius:16px;padding:6px 10px;font-size:13px;font-weight:700;}
+.sel-chip .px{background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-family:'DM Mono',monospace;}
+.sel-chip button{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;line-height:1;padding:0;}
+.sel-empty{font-size:12px;color:var(--muted);}
 .clear-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
 .parent-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
 .parent-chip{background:var(--surface2);border:1.5px solid var(--border);border-radius:18px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text);white-space:nowrap;font-family:'Noto Sans JP',sans-serif;}
@@ -218,20 +223,18 @@ textarea.form-input{resize:vertical;min-height:52px;}
     <div class="card-title">新規タスク追加</div>
     <label class="form-label">日付</label>
     <input type="date" class="form-input" id="inp-date">
-    <label class="form-label">コース選択</label>
-    <div class="selected-display" id="sel-disp">
-      <span class="selected-name" id="sel-name"></span>
-      <button class="clear-btn" id="clear-btn">×</button>
-    </div>
-    <div class="parent-grid" id="parent-grid"></div>
-    <label class="form-label">金額</label>
+    <label class="form-label">金額（コースをタップする前に選んでね）</label>
     <div class="price-toggle">
       <div class="price-btn selected" data-price="3000">¥3,000</div>
       <div class="price-btn" data-price="4000">¥4,000</div>
     </div>
-    <label class="form-label">メモ（任意）</label>
+    <label class="form-label">コース選択（複数えらべます）</label>
+    <div class="sel-list" id="sel-list"></div>
+    <button class="clear-btn" id="clear-btn" style="display:none;font-size:13px;">✕ 全部クリア</button>
+    <div class="parent-grid" id="parent-grid"></div>
+    <label class="form-label">メモ（任意・全コース共通）</label>
     <textarea class="form-input" id="inp-memo" placeholder="備考など"></textarea>
-    <button class="btn btn-primary" id="add-btn">＋ 追加する</button>
+    <button class="btn btn-primary" id="add-btn">＋ まとめて追加する</button>
   </div>
 </div>
 
@@ -502,7 +505,7 @@ function save(){try{localStorage.setItem(SKEY,JSON.stringify({tasks:st.tasks,gro
 
 const now=new Date();
 const loaded=load();
-const st={year:now.getFullYear(),month:now.getMonth()+1,price:3000,course:'',tasks:loaded.tasks,groups:loaded.groups};
+const st={year:now.getFullYear(),month:now.getMonth()+1,price:3000,course:'',selected:[],tasks:loaded.tasks,groups:loaded.groups};
 
 // 初期日付
 (function(){
@@ -596,12 +599,24 @@ function openManage(){
 function closeManage(){document.getElementById('manage-overlay').classList.remove('open');}
 
 function selectCourse(name){
-  st.course=name;
-  document.getElementById('sel-name').textContent=name;
-  document.getElementById('sel-disp').classList.add('visible');
+  // 同じコースが未選択なら、今選んでいる金額つきで選択リストに追加（複数可）
+  if(!st.selected.some(s=>s.course===name)) st.selected.push({course:name,price:st.price});
+  renderSelected();
   closeSub();
 }
-function clearCourse(){st.course='';document.getElementById('sel-disp').classList.remove('visible');}
+function renderSelected(){
+  const box=document.getElementById('sel-list');
+  const clr=document.getElementById('clear-btn');
+  if(!st.selected.length){
+    box.innerHTML='<span class="sel-empty">↓ コースをタップで追加（何件でもOK）</span>';
+    clr.style.display='none';
+    return;
+  }
+  box.innerHTML=st.selected.map((s,i)=>`<span class="sel-chip">${s.course}<span class="px">¥${s.price.toLocaleString()}</span><button onclick="removeSel(${i})">✕</button></span>`).join('');
+  clr.style.display='inline-block';
+}
+window.removeSel=function(i){st.selected.splice(i,1);renderSelected();};
+function clearCourse(){st.selected=[];renderSelected();}
 
 function openSub(g){
   document.getElementById('sub-lbl').textContent=g.parent;
@@ -635,13 +650,15 @@ document.getElementById('add-btn').onclick=function(){
   const date=document.getElementById('inp-date').value;
   const memo=document.getElementById('inp-memo').value.trim();
   if(!date){toast('❌ 日付を選択してください',true);return;}
-  if(!st.course){toast('❌ コースを選択してください',true);return;}
-  st.tasks.push({id:Date.now(),date,course:st.course,price:st.price,memo});
+  if(!st.selected.length){toast('❌ コースを選択してください',true);return;}
+  // 選択した全コースを一覧に追加（同じ日付・メモ／金額はコースごと）
+  st.selected.forEach((s,i)=>st.tasks.push({id:Date.now()+i,date,course:s.course,price:s.price,memo}));
+  const n=st.selected.length;
   save();
   document.getElementById('inp-memo').value='';
   clearCourse();
   renderAll();
-  toast('✅ 追加しました！');
+  toast(`✅ ${n}件 追加しました！`);
 };
 
 function renderList(tasks){
@@ -1046,6 +1063,7 @@ refreshBanner();
 
 renderGrid();
 renderAll();
+renderSelected();
 </script>
 </body>
 </html>
