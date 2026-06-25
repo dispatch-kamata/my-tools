@@ -1,419 +1,411 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>受付カード（作業指示書・整備内容細書）</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="受付カード" />
+<title>受付カード（車検）</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --blue:#1565c0; --ink:#111; --line:#555; --bg:#eceff1; }
+  body { font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; background:var(--bg); color:var(--ink); }
 
-body {
-  font-family: "Hiragino Kaku Gothic ProN", "MS Gothic", "Noto Sans JP", sans-serif;
-  font-size: 11px;
-  background: #e0e0e0;
-  padding: 12px;
-  color: #111;
-}
-
-.btn-row {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-button {
-  padding: 8px 20px;
-  font-size: 13px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: bold;
-}
-.btn-print { background: #1565c0; color: #fff; }
-.btn-clear { background: #e53935; color: #fff; }
-.btn-save  { background: #2e7d32; color: #fff; }
-.btn-load  { background: #6a1b9a; color: #fff; padding: 8px 20px; font-size: 13px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; display: inline-block; }
-
-.page {
-  background: #fff;
-  width: 210mm;
-  min-height: 297mm;
-  margin: 0 auto;
-  padding: 8mm 8mm 6mm;
-  border: 1px solid #bbb;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-}
-
-h1 {
-  text-align: center;
-  font-size: 18px;
-  letter-spacing: 0.5em;
-  font-weight: bold;
-  margin-bottom: 2px;
-}
-
-.subtitle {
-  text-align: center;
-  font-size: 10px;
-  margin-bottom: 5px;
-}
-
-table { width: 100%; border-collapse: collapse; }
-
-td, th {
-  border: 1px solid #555;
-  padding: 1px 3px;
-  vertical-align: middle;
-  font-size: 10px;
-}
-
-.lbl {
-  background: #f0f0f0;
-  text-align: center;
-  white-space: nowrap;
-  font-size: 9px;
-}
-
-/* 入力欄共通：1行表示、はみ出したら自動縮小 */
-.cell-input {
-  display: block;
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: inherit;
-  color: #111;
-  padding: 0 1px;
-  font-size: 9px;
-  line-height: 1.4;
-  /* 最大2行分の高さ */
-  max-height: 2.8em;
-  overflow: hidden;
-  resize: none;
-  word-break: break-all;
-  white-space: pre-wrap;
-}
-
-/* 依頼内容は大きめ */
-textarea#request {
-  display: block;
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 9px;
-  color: #111;
-  padding: 0 1px;
-  resize: none;
-  height: 86px;
-  overflow: auto;
-}
-
-textarea:focus, input:focus { background: #fffde7; border-radius: 2px; }
-
-.h22 td { height: 22px; }
-
-.work-table th {
-  background: #e8e8e8;
-  text-align: center;
-  font-size: 9px;
-  height: 20px;
-  letter-spacing: 0.05em;
-}
-.work-table td {
-  height: 20px;
-  vertical-align: middle;
-  padding: 1px 3px;
-}
-
-.code-table td {
-  text-align: center;
-  font-size: 9px;
-  height: 18px;
-}
-
-@media print {
-  @page { size: A4 portrait; margin: 0; }
-  body { background: #fff; padding: 0; margin: 0; }
-  .btn-row { display: none !important; }
-  .page {
-    width: 210mm;
-    min-height: 297mm;
-    margin: 0;
-    padding: 8mm 8mm 6mm;
-    border: none;
-    box-shadow: none;
+  /* ── 上部ツールバー ── */
+  .toolbar {
+    position: sticky; top: 0; z-index: 50;
+    background:#263238; color:#fff;
+    display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+    padding:10px 12px;
   }
-}
+  .toolbar .ttl { font-size:15px; font-weight:800; margin-right:auto; }
+  .toolbar button, .toolbar label {
+    border:none; border-radius:8px; padding:8px 12px;
+    font:inherit; font-size:13px; font-weight:700; cursor:pointer; color:#fff;
+  }
+  .btn-tab { background:#455a64; }
+  .btn-tab.active { background:var(--blue); }
+  .btn-print { background:#1565c0; }
+  .btn-save  { background:#2e7d32; }
+  .btn-load  { background:#6a1b9a; }
+  .btn-clear { background:#c62828; }
 
-@media (max-width: 640px) {
-  .page { width: 100%; min-height: auto; padding: 10px 6px; }
-  h1 { font-size: 15px; }
-}
+  /* ── 入力フォーム ── */
+  .form-wrap { max-width:680px; margin:0 auto; padding:14px; }
+  .sec { background:#fff; border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,.06); padding:14px; margin-bottom:14px; }
+  .sec h2 { font-size:15px; font-weight:800; margin-bottom:12px; color:#263238; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  @media (max-width:560px){ .grid2,.grid3 { grid-template-columns:1fr; } }
+  .fld label { display:block; font-size:12px; font-weight:700; color:#546e7a; margin-bottom:4px; }
+  .fld input, .fld textarea {
+    width:100%; padding:10px 12px; border:1.5px solid #cfd8dc; border-radius:10px;
+    font:inherit; font-size:16px; background:#fafafa;
+  }
+  .fld input:focus, .fld textarea:focus { outline:none; border-color:var(--blue); background:#fff; }
+  .fld textarea { min-height:80px; resize:vertical; }
+  .full { grid-column:1 / -1; }
+
+  /* 作業明細（入力） */
+  .work-row { border:1.5px solid #e0e0e0; border-radius:12px; padding:10px; margin-bottom:10px; background:#fafafa; position:relative; }
+  .work-row .wr-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .work-row .wr-no { font-size:12px; font-weight:800; color:var(--blue); }
+  .work-row .wr-del { background:#ffebee; color:#c62828; border:none; border-radius:8px; padding:4px 10px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+  .add-row { width:100%; padding:11px; border:2px dashed var(--blue); border-radius:10px; background:#e3f2fd; color:var(--blue); font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+  .legend { font-size:11px; color:#607d8b; line-height:1.8; margin-top:8px; }
+  .legend b { color:#37474f; }
+
+  /* 記号ダイヤル（配車アプリと同じスクロール式） */
+  .swheel-field { position:relative; height:108px; background:#fff; border:1.5px solid #cfd8dc; border-radius:10px; overflow:hidden; }
+  .swheel { height:100%; overflow-y:scroll; scroll-snap-type:y mandatory; -webkit-overflow-scrolling:touch; text-align:center; scrollbar-width:none; }
+  .swheel::-webkit-scrollbar { display:none; }
+  .swheel-pad { height:36px; }
+  .swheel-item { height:36px; line-height:36px; scroll-snap-align:center; font-size:15px; font-weight:700; color:#90a4ae; }
+  .swheel-item.sel { color:#0d47a1; }
+  .swheel-center { position:absolute; left:6px; right:6px; top:36px; height:36px; pointer-events:none; border-top:1.5px solid #90caf9; border-bottom:1.5px solid #90caf9; background:rgba(21,101,192,.06); border-radius:6px; }
+
+  /* ── A4 完成カード（プレビュー）── */
+  .preview-wrap { background:#9aa7ad; padding:14px; overflow:auto; }
+  .page {
+    background:#fff; width:210mm; min-height:297mm; margin:0 auto;
+    padding:8mm 8mm 6mm; border:1px solid #bbb; box-shadow:0 2px 10px rgba(0,0,0,.2);
+    font-size:11px; color:#111;
+  }
+  .page h1 { text-align:center; font-size:18px; letter-spacing:.5em; font-weight:bold; }
+  .page .subtitle { text-align:center; font-size:10px; margin-bottom:5px; }
+  .page table { width:100%; border-collapse:collapse; }
+  .page td, .page th { border:1px solid #555; padding:1px 4px; vertical-align:middle; font-size:10px; }
+  .page .lbl { background:#f0f0f0; text-align:center; white-space:nowrap; font-size:9px; }
+  .page .h22 td { height:22px; }
+  .page .work-table th { background:#e8e8e8; text-align:center; font-size:9px; height:20px; }
+  .page .work-table td { height:20px; }
+  .page .req-cell { height:90px; vertical-align:top; white-space:pre-wrap; font-size:10px; }
+  .page .code-table td { text-align:center; font-size:9px; height:18px; }
+  .hidden { display:none; }
+
+  @media print {
+    @page { size:A4 portrait; margin:0; }
+    body { background:#fff; }
+    .toolbar, .form-wrap, .preview-wrap > .ph { display:none !important; }
+    .preview-wrap { padding:0; background:#fff; overflow:visible; }
+    .page { width:210mm; min-height:297mm; margin:0; border:none; box-shadow:none; }
+  }
 </style>
 </head>
 <body>
 
-<div class="btn-row">
-  <button class="btn-print" onclick="window.print()">🖨️ 印刷</button>
-  <button class="btn-save"  onclick="saveToFile()">💾 保存</button>
-  <label class="btn-load"><input type="file" id="loadInput" accept=".json" onchange="loadFromFile(event)" style="display:none">📂 読込</label>
+<div class="toolbar">
+  <span class="ttl">🚗 受付カード（車検）</span>
+  <button class="btn-tab active" id="tabForm" onclick="showView('form')">📝 入力</button>
+  <button class="btn-tab" id="tabPrev" onclick="showView('prev')">👁 完成カード</button>
+  <button class="btn-print" onclick="goPrint()">🖨️ 印刷</button>
+  <button class="btn-save" onclick="saveToFile()">💾 保存</button>
+  <label class="btn-load">📂 読込<input type="file" id="loadInput" accept=".json" onchange="loadFromFile(event)" style="display:none"></label>
   <button class="btn-clear" onclick="clearData()">🗑️ クリア</button>
 </div>
 
-<div class="page">
-  <h1>受　付　カ　ー　ド</h1>
-  <div class="subtitle">（作業指示書・整備内容細書）</div>
+<!-- ===== 入力フォーム ===== -->
+<div class="form-wrap" id="view-form">
 
-  <!-- 車両情報 -->
-  <table class="h22" style="margin-bottom:2px;">
-    <colgroup>
-      <col style="width:9%"><col style="width:13%">
-      <col style="width:5%"><col style="width:15%">
-      <col style="width:5%"><col style="width:11%">
-      <col style="width:5%"><col style="width:11%">
-      <col style="width:8%"><col style="width:18%">
-    </colgroup>
-    <tr>
-      <td class="lbl">ナンバー</td>
-      <td><textarea class="cell-input" id="number"></textarea></td>
-      <td class="lbl" style="font-size:8px;">車<br>種</td>
-      <td><textarea class="cell-input" id="cartype"></textarea></td>
-      <td class="lbl" style="font-size:8px;">F<br>No.</td>
-      <td><textarea class="cell-input" id="fno"></textarea></td>
-      <td class="lbl" style="font-size:8px;">E<br>N</td>
-      <td><textarea class="cell-input" id="en"></textarea></td>
-      <td class="lbl">初年度</td>
-      <td><textarea class="cell-input" id="year" placeholder="例：R3.4"></textarea></td>
-    </tr>
-    <tr>
-      <td class="lbl">顧客名</td>
-      <td colspan="3"><textarea class="cell-input" id="customer"></textarea></td>
-      <td class="lbl">住所</td>
-      <td colspan="3"><textarea class="cell-input" id="address"></textarea></td>
-      <td class="lbl">走行K</td>
-      <td><textarea class="cell-input" id="mileage"></textarea></td>
-    </tr>
-  </table>
+  <div class="sec">
+    <h2>🚗 車両情報</h2>
+    <div class="grid2">
+      <div class="fld"><label>ナンバー</label><input id="number" placeholder="福岡 300 あ 12-34"></div>
+      <div class="fld"><label>車種</label><input id="cartype" placeholder="例：プリウス"></div>
+      <div class="fld"><label>車体番号（F No.）</label><input id="fno"></div>
+      <div class="fld"><label>原動機型式（E N）</label><input id="en"></div>
+      <div class="fld"><label>類別区分</label><input id="category"></div>
+      <div class="fld"><label>型式指定</label><input id="model"></div>
+      <div class="fld"><label>初年度登録</label><input id="year" placeholder="例：R3.4"></div>
+      <div class="fld"><label>有効期限（車検）</label><input id="expiry" placeholder="例：R7.6.30"></div>
+      <div class="fld"><label>走行距離（km）</label><input id="mileage" inputmode="numeric"></div>
+    </div>
+  </div>
 
-  <!-- お客様依頼事項 -->
-  <table style="margin-bottom:2px;">
-    <colgroup>
-      <col style="width:20%"><col style="width:54%">
-      <col style="width:9%"><col style="width:17%">
-    </colgroup>
-    <tr>
-      <td class="lbl" style="letter-spacing:0.1em; height:18px;">お客様依頼事項</td>
-      <td colspan="3" style="height:18px;">
-        <table style="border:none; width:100%;">
-          <tr>
-            <td style="border:none; width:18%; padding:0;" class="lbl">代車</td>
-            <td style="border:none; width:32%; padding:0 4px;"><textarea class="cell-input" id="rental"></textarea></td>
-            <td style="border:none; width:20%; padding:0;" class="lbl">型式指定</td>
-            <td style="border:none; width:30%; padding:0 4px;"><textarea class="cell-input" id="model"></textarea></td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td rowspan="6" style="vertical-align:top; padding:2px; height:90px;">
-        <textarea id="request" placeholder="依頼内容"></textarea>
-      </td>
-      <td rowspan="4" style="vertical-align:top; padding:2px; height:72px;">
-        <table style="border:none; width:100%; height:100%;">
-          <tr style="height:18px;">
-            <td class="lbl" style="border:1px solid #555; width:35%;">自賠責</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="jibaiseki"></textarea></td>
-          </tr>
-          <tr style="height:18px;">
-            <td class="lbl" style="border:1px solid #555;">重量税</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="jyuryo"></textarea></td>
-          </tr>
-          <tr style="height:18px;">
-            <td class="lbl" style="border:1px solid #555;">印紙</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="inshi"></textarea></td>
-          </tr>
-          <tr style="height:18px;">
-            <td class="lbl" style="border:1px solid #555;">リサイクル料</td>
-            <td style="border:1px solid #555; padding:0 3px;"><textarea class="cell-input" id="recycle"></textarea></td>
-          </tr>
-        </table>
-      </td>
-      <td class="lbl" style="height:18px;">類別区分</td>
-      <td><textarea class="cell-input" id="category"></textarea></td>
-    </tr>
-    <tr style="height:18px;">
-      <td class="lbl">タイヤの溝</td>
-      <td><textarea class="cell-input" id="tyre"></textarea></td>
-    </tr>
-    <tr style="height:18px;">
-      <td class="lbl">ライニング残存</td>
-      <td><textarea class="cell-input" id="lining"></textarea></td>
-    </tr>
-    <tr style="height:18px;"><td></td><td></td></tr>
-  </table>
+  <div class="sec">
+    <h2>👤 お客様</h2>
+    <div class="grid2">
+      <div class="fld"><label>顧客名</label><input id="customer"></div>
+      <div class="fld"><label>住所</label><input id="address"></div>
+      <div class="fld full"><label>代車</label><input id="rental" placeholder="有／無・車名など"></div>
+    </div>
+  </div>
 
-  <!-- 作業指示書 -->
-  <table class="work-table" style="margin-bottom:2px;">
-    <colgroup>
-      <col style="width:18%"><col style="width:30%">
-      <col style="width:9%"><col style="width:24%">
-      <col style="width:8%"><col style="width:11%">
-    </colgroup>
-    <tr>
-      <th>作　業　指　示　書</th>
-      <th>作　　業　　内　　容</th>
-      <th>日付</th>
-      <th>使　用　部　品</th>
-      <th>数量</th>
-      <th>単　価</th>
-    </tr>
-    <tr><td><textarea class="cell-input" id="w_inst1"></textarea></td><td><textarea class="cell-input" id="w_cont1"></textarea></td><td><textarea class="cell-input" id="w_date1"></textarea></td><td><textarea class="cell-input" id="w_part1"></textarea></td><td><textarea class="cell-input" id="w_qty1"></textarea></td><td><textarea class="cell-input" id="w_price1"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst2"></textarea></td><td><textarea class="cell-input" id="w_cont2"></textarea></td><td><textarea class="cell-input" id="w_date2"></textarea></td><td><textarea class="cell-input" id="w_part2"></textarea></td><td><textarea class="cell-input" id="w_qty2"></textarea></td><td><textarea class="cell-input" id="w_price2"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst3"></textarea></td><td><textarea class="cell-input" id="w_cont3"></textarea></td><td><textarea class="cell-input" id="w_date3"></textarea></td><td><textarea class="cell-input" id="w_part3"></textarea></td><td><textarea class="cell-input" id="w_qty3"></textarea></td><td><textarea class="cell-input" id="w_price3"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst4"></textarea></td><td><textarea class="cell-input" id="w_cont4"></textarea></td><td><textarea class="cell-input" id="w_date4"></textarea></td><td><textarea class="cell-input" id="w_part4"></textarea></td><td><textarea class="cell-input" id="w_qty4"></textarea></td><td><textarea class="cell-input" id="w_price4"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst5"></textarea></td><td><textarea class="cell-input" id="w_cont5"></textarea></td><td><textarea class="cell-input" id="w_date5"></textarea></td><td><textarea class="cell-input" id="w_part5"></textarea></td><td><textarea class="cell-input" id="w_qty5"></textarea></td><td><textarea class="cell-input" id="w_price5"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst6"></textarea></td><td><textarea class="cell-input" id="w_cont6"></textarea></td><td><textarea class="cell-input" id="w_date6"></textarea></td><td><textarea class="cell-input" id="w_part6"></textarea></td><td><textarea class="cell-input" id="w_qty6"></textarea></td><td><textarea class="cell-input" id="w_price6"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst7"></textarea></td><td><textarea class="cell-input" id="w_cont7"></textarea></td><td><textarea class="cell-input" id="w_date7"></textarea></td><td><textarea class="cell-input" id="w_part7"></textarea></td><td><textarea class="cell-input" id="w_qty7"></textarea></td><td><textarea class="cell-input" id="w_price7"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst8"></textarea></td><td><textarea class="cell-input" id="w_cont8"></textarea></td><td><textarea class="cell-input" id="w_date8"></textarea></td><td><textarea class="cell-input" id="w_part8"></textarea></td><td><textarea class="cell-input" id="w_qty8"></textarea></td><td><textarea class="cell-input" id="w_price8"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst9"></textarea></td><td><textarea class="cell-input" id="w_cont9"></textarea></td><td><textarea class="cell-input" id="w_date9"></textarea></td><td><textarea class="cell-input" id="w_part9"></textarea></td><td><textarea class="cell-input" id="w_qty9"></textarea></td><td><textarea class="cell-input" id="w_price9"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst10"></textarea></td><td><textarea class="cell-input" id="w_cont10"></textarea></td><td><textarea class="cell-input" id="w_date10"></textarea></td><td><textarea class="cell-input" id="w_part10"></textarea></td><td><textarea class="cell-input" id="w_qty10"></textarea></td><td><textarea class="cell-input" id="w_price10"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst11"></textarea></td><td><textarea class="cell-input" id="w_cont11"></textarea></td><td><textarea class="cell-input" id="w_date11"></textarea></td><td><textarea class="cell-input" id="w_part11"></textarea></td><td><textarea class="cell-input" id="w_qty11"></textarea></td><td><textarea class="cell-input" id="w_price11"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst12"></textarea></td><td><textarea class="cell-input" id="w_cont12"></textarea></td><td><textarea class="cell-input" id="w_date12"></textarea></td><td><textarea class="cell-input" id="w_part12"></textarea></td><td><textarea class="cell-input" id="w_qty12"></textarea></td><td><textarea class="cell-input" id="w_price12"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst13"></textarea></td><td><textarea class="cell-input" id="w_cont13"></textarea></td><td><textarea class="cell-input" id="w_date13"></textarea></td><td><textarea class="cell-input" id="w_part13"></textarea></td><td><textarea class="cell-input" id="w_qty13"></textarea></td><td><textarea class="cell-input" id="w_price13"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst14"></textarea></td><td><textarea class="cell-input" id="w_cont14"></textarea></td><td><textarea class="cell-input" id="w_date14"></textarea></td><td><textarea class="cell-input" id="w_part14"></textarea></td><td><textarea class="cell-input" id="w_qty14"></textarea></td><td><textarea class="cell-input" id="w_price14"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst15"></textarea></td><td><textarea class="cell-input" id="w_cont15"></textarea></td><td><textarea class="cell-input" id="w_date15"></textarea></td><td><textarea class="cell-input" id="w_part15"></textarea></td><td><textarea class="cell-input" id="w_qty15"></textarea></td><td><textarea class="cell-input" id="w_price15"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst16"></textarea></td><td><textarea class="cell-input" id="w_cont16"></textarea></td><td><textarea class="cell-input" id="w_date16"></textarea></td><td><textarea class="cell-input" id="w_part16"></textarea></td><td><textarea class="cell-input" id="w_qty16"></textarea></td><td><textarea class="cell-input" id="w_price16"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst17"></textarea></td><td><textarea class="cell-input" id="w_cont17"></textarea></td><td><textarea class="cell-input" id="w_date17"></textarea></td><td><textarea class="cell-input" id="w_part17"></textarea></td><td><textarea class="cell-input" id="w_qty17"></textarea></td><td><textarea class="cell-input" id="w_price17"></textarea></td></tr>
-    <tr><td><textarea class="cell-input" id="w_inst18"></textarea></td><td><textarea class="cell-input" id="w_cont18"></textarea></td><td><textarea class="cell-input" id="w_date18"></textarea></td><td><textarea class="cell-input" id="w_part18"></textarea></td><td><textarea class="cell-input" id="w_qty18"></textarea></td><td><textarea class="cell-input" id="w_price18"></textarea></td></tr>
-  </table>
+  <div class="sec">
+    <h2>📝 依頼内容</h2>
+    <div class="fld"><textarea id="request" placeholder="お客様からの依頼内容"></textarea></div>
+  </div>
 
-  <!-- 記号テーブル -->
-  <table class="code-table">
-    <tr>
-      <td class="lbl">記号</td><td class="lbl">点検</td><td class="lbl">分解</td>
-      <td class="lbl">交換</td><td class="lbl">修理</td><td class="lbl">調整</td>
-      <td class="lbl">締付</td><td class="lbl">清掃</td><td class="lbl">給油</td>
-      <td class="lbl">脱着</td><td class="lbl">板金</td><td class="lbl">塗装</td>
-      <td class="lbl" colspan="2">有効期限</td>
-    </tr>
-    <tr>
-      <td></td><td>V</td><td>○</td><td>×</td><td>△</td>
-      <td>A</td><td>T</td><td>C</td><td>L</td>
-      <td>D</td><td>B</td><td>P</td>
-      <td colspan="2"><textarea class="cell-input" id="expiry" placeholder="例：R7.6.30"></textarea></td>
-    </tr>
-  </table>
+  <div class="sec">
+    <h2>💴 法定費用</h2>
+    <div class="grid2">
+      <div class="fld"><label>自賠責</label><input id="jibaiseki" inputmode="numeric"></div>
+      <div class="fld"><label>重量税</label><input id="jyuryo" inputmode="numeric"></div>
+      <div class="fld"><label>印紙</label><input id="inshi" inputmode="numeric"></div>
+      <div class="fld"><label>リサイクル料</label><input id="recycle" inputmode="numeric"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>🔧 点検結果</h2>
+    <div class="grid2">
+      <div class="fld"><label>タイヤの溝</label><input id="tyre" placeholder="例：前5mm 後4mm"></div>
+      <div class="fld"><label>ライニング残存</label><input id="lining" placeholder="例：前7mm 後6mm"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>🛠 作業明細</h2>
+    <div id="workList"></div>
+    <button class="add-row" onclick="addWork()">＋ 作業行を追加</button>
+    <div class="legend">
+      <b>記号</b>：V=点検 ○=分解 ×=交換 △=修理 A=調整 T=締付 C=清掃 L=給油 D=脱着 B=板金 P=塗装
+    </div>
+  </div>
 
 </div>
 
+<!-- ===== A4 完成カード ===== -->
+<div class="preview-wrap hidden" id="view-prev">
+  <div class="ph" style="text-align:center;color:#fff;font-size:12px;margin-bottom:8px;">↓ この内容で印刷されます（A4 1枚）</div>
+  <div class="page" id="cardPage"></div>
+</div>
+
 <script>
-// 自動フォント縮小（最大2行に収まるよう縮小）
-function shrinkToFit(el) {
-  const maxLines = 2;
-  const lineHeight = 1.4;
-  let fontSize = 9; // 開始サイズ
-  const minSize = 5;
+  const SINGLE_IDS = ['number','cartype','fno','en','year','category','mileage',
+    'customer','address','rental','model','request',
+    'jibaiseki','jyuryo','inshi','recycle','tyre','lining','expiry'];
+  const WORK_COLS = ['inst','cont','date','part','qty','price'];
+  const WORK_PH = { inst:'記号', cont:'作業内容', date:'日付', part:'使用部品', qty:'数量', price:'単価' };
+  let works = [];
 
-  el.style.fontSize = fontSize + 'px';
-  el.style.height = 'auto';
+  const $ = id => document.getElementById(id);
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  // フォントを縮小しながら2行以内に収める
-  while (fontSize > minSize) {
-    el.style.fontSize = fontSize + 'px';
-    const maxHeight = fontSize * lineHeight * maxLines;
-    if (el.scrollHeight <= maxHeight + 2) break;
-    fontSize -= 0.5;
-  }
-}
-
-function setupInputs() {
-  document.querySelectorAll('textarea.cell-input').forEach(el => {
-    // 初期高さ：1行分
-    el.style.height = (9 * 1.4) + 'px';
-    el.addEventListener('input', () => {
-      el.style.height = 'auto';
-      shrinkToFit(el);
-      // 高さを2行分に固定
-      const fs = parseFloat(el.style.fontSize);
-      el.style.height = (fs * 1.4 * 2) + 'px';
-    });
-  });
-}
-
-function getAllIds() {
-  const ids = [
-    'number','cartype','fno','en','year',
-    'customer','address','mileage',
-    'rental','model','category','request',
-    'jibaiseki','jyuryo','inshi','recycle',
-    'tyre','lining','expiry'
+  // 記号ダイヤルの選択肢（記号＝内容）
+  const SYMBOLS = [
+    {v:'',  label:'（記号なし）'},
+    {v:'V', label:'V ＝ 点検'}, {v:'○', label:'○ ＝ 分解'}, {v:'×', label:'× ＝ 交換'},
+    {v:'△', label:'△ ＝ 修理'}, {v:'A', label:'A ＝ 調整'}, {v:'T', label:'T ＝ 締付'},
+    {v:'C', label:'C ＝ 清掃'}, {v:'L', label:'L ＝ 給油'}, {v:'D', label:'D ＝ 脱着'},
+    {v:'B', label:'B ＝ 板金'}, {v:'P', label:'P ＝ 塗装'},
   ];
-  for (let i = 1; i <= 18; i++) {
-    ids.push(`w_inst${i}`,`w_cont${i}`,`w_date${i}`,`w_part${i}`,`w_qty${i}`,`w_price${i}`);
+
+  // ── 作業明細（入力フォーム）──
+  function renderWorks() {
+    $('workList').innerHTML = works.map((w,i) => `
+      <div class="work-row">
+        <div class="wr-head">
+          <span class="wr-no">No.${i+1}</span>
+          <button class="wr-del" onclick="delWork(${i})">削除</button>
+        </div>
+        <div class="grid2">
+          <div class="fld full"><label>日付</label><input value="${esc(w.date)}" oninput="upWork(${i},'date',this.value)" placeholder="例：6/30"></div>
+          <div class="fld full"><label>記号（作業の種類）— ダイヤルで選択</label>
+            <div class="swheel-field" data-wi="${i}"><div class="swheel"></div><div class="swheel-center"></div></div>
+          </div>
+          <div class="fld full"><label>作業内容</label><input value="${esc(w.cont)}" oninput="upWork(${i},'cont',this.value)"></div>
+          <div class="fld full"><label>使用部品</label><input value="${esc(w.part)}" oninput="upWork(${i},'part',this.value)"></div>
+          <div class="fld"><label>数量</label><input value="${esc(w.qty)}" oninput="upWork(${i},'qty',this.value)" inputmode="numeric"></div>
+          <div class="fld"><label>単価</label><input value="${esc(w.price)}" oninput="upWork(${i},'price',this.value)" inputmode="numeric"></div>
+        </div>
+      </div>`).join('');
+    // 各行の記号ダイヤルを生成
+    $('workList').querySelectorAll('.swheel-field').forEach(f => {
+      const i = Number(f.dataset.wi);
+      makeWheel(f, SYMBOLS, works[i].inst, v => { works[i].inst = v; });
+    });
   }
-  return ids;
-}
 
-// ===== ファイルに保存 =====
-function saveToFile() {
-  const data = {};
-  getAllIds().forEach(id => {
-    const el = document.getElementById(id);
-    if (el) data[id] = el.value;
-  });
-  const json = JSON.stringify(data, null, 2);
-  const now = new Date();
-  const ts = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2)
-           + '_' + ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2);
-  const filename = '受付カード_' + ts + '.json';
-  const blob = new Blob([json], {type: 'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-// ===== ファイルから読込 =====
-function loadFromFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
+  // 記号スクロールダイヤル（配車アプリと同方式・トラックパッド/タッチ対応）
+  let _ac;
+  function tick() {
     try {
-      const data = JSON.parse(e.target.result);
-      getAllIds().forEach(id => {
-        const el = document.getElementById(id);
-        if (el && data[id] !== undefined) {
-          el.value = data[id];
-          if (el.classList.contains('cell-input')) shrinkToFit(el);
-        }
-      });
-      alert('✅ 読み込みました！');
-    } catch(err) {
-      alert('❌ ファイルの読み込みに失敗しました');
-    }
+      _ac = _ac || new (window.AudioContext||window.webkitAudioContext)();
+      if (_ac.state==='suspended') _ac.resume();
+      const t=_ac.currentTime, dur=0.011;
+      const buf=_ac.createBuffer(1,Math.max(1,Math.ceil(_ac.sampleRate*dur)),_ac.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let k=0;k<d.length;k++) d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,2);
+      const src=_ac.createBufferSource(); src.buffer=buf;
+      const bp=_ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=.8;
+      const g=_ac.createGain(); g.gain.value=.05;
+      src.connect(bp); bp.connect(g); g.connect(_ac.destination); src.start(t);
+    } catch {}
+  }
+  function makeWheel(field, items, value, onPick) {
+    const ITEM = 36;
+    const wheel = field.querySelector('.swheel');
+    wheel.innerHTML = '<div class="swheel-pad"></div>' +
+      items.map(it => `<div class="swheel-item">${esc(it.label)}</div>`).join('') +
+      '<div class="swheel-pad"></div>';
+    const curIdx = () => Math.max(0, Math.min(items.length-1, Math.round(wheel.scrollTop/ITEM)));
+    const highlight = () => { wheel.querySelectorAll('.swheel-item').forEach((el,i)=>el.classList.toggle('sel', i===curIdx())); };
+    let start = items.findIndex(it => it.v === value); if (start < 0) start = 0;
+    wheel.scrollTop = start * ITEM; highlight();
+    wheel._lastIdx = curIdx();
+    wheel.addEventListener('scroll', () => {
+      const idx = curIdx();
+      if (idx !== wheel._lastIdx) { wheel._lastIdx = idx; highlight(); tick(); }
+      clearTimeout(wheel._t);
+      wheel._t = setTimeout(() => onPick(items[curIdx()].v), 90);
+    });
+    wheel.addEventListener('click', e => {
+      const it = e.target.closest('.swheel-item'); if (!it) return;
+      const i = [...wheel.querySelectorAll('.swheel-item')].indexOf(it);
+      wheel.scrollTo({ top: i*ITEM, behavior:'smooth' });
+    });
+  }
+  window.addWork = () => { works.push({inst:'',cont:'',date:'',part:'',qty:'',price:''}); renderWorks(); };
+  window.delWork = i => { works.splice(i,1); renderWorks(); };
+  window.upWork = (i,k,v) => { works[i][k] = v; };
+
+  // ── ビュー切替 ──
+  window.showView = v => {
+    $('view-form').classList.toggle('hidden', v!=='form');
+    $('view-prev').classList.toggle('hidden', v!=='prev');
+    $('tabForm').classList.toggle('active', v==='form');
+    $('tabPrev').classList.toggle('active', v==='prev');
+    if (v==='prev') renderCard();
+    window.scrollTo(0,0);
   };
-  reader.readAsText(file);
-  // 同じファイルを再度選べるようリセット
-  event.target.value = '';
-}
 
-function clearData() {
-  if (!confirm('入力内容をすべてクリアしますか？')) return;
-  getAllIds().forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-}
+  // ── A4カード描画 ──
+  function val(id){ return esc($(id) ? $(id).value : ''); }
+  function renderCard() {
+    const MIN_ROWS = 16;
+    const rows = works.slice();
+    while (rows.length < MIN_ROWS) rows.push({inst:'',cont:'',date:'',part:'',qty:'',price:''});
+    let lastDate = '';
+    const workRows = rows.map(w => {
+      const hasContent = !!(w.date || w.cont || w.inst || w.part || w.qty || w.price);
+      let dc = '';
+      if (w.date) { dc = esc(w.date); lastDate = w.date; }   // 日付あり→表示
+      else if (hasContent && lastDate) { dc = '〃'; }         // 以降は同上（〃）
+      return `<tr>
+        <td style="text-align:center">${dc}</td><td>${esc(w.cont)}</td>
+        <td style="text-align:center">${esc(w.inst)}</td><td>${esc(w.part)}</td>
+        <td style="text-align:center">${esc(w.qty)}</td><td style="text-align:right">${esc(w.price)}</td>
+      </tr>`;
+    }).join('');
 
-window.onload = function() {
-  setupInputs();
-};
+    $('cardPage').innerHTML = `
+      <h1>受　付　カ　ー　ド</h1>
+      <div class="subtitle">（作業指示書・整備内容細書）</div>
+
+      <table class="h22" style="margin-bottom:2px;">
+        <colgroup><col style="width:9%"><col style="width:13%"><col style="width:5%"><col style="width:15%"><col style="width:5%"><col style="width:11%"><col style="width:5%"><col style="width:11%"><col style="width:8%"><col style="width:18%"></colgroup>
+        <tr>
+          <td class="lbl">ナンバー</td><td>${val('number')}</td>
+          <td class="lbl">車種</td><td>${val('cartype')}</td>
+          <td class="lbl">F No.</td><td>${val('fno')}</td>
+          <td class="lbl">E N</td><td>${val('en')}</td>
+          <td class="lbl">初年度</td><td>${val('year')}</td>
+        </tr>
+        <tr>
+          <td class="lbl">顧客名</td><td colspan="3">${val('customer')}</td>
+          <td class="lbl">住所</td><td colspan="3">${val('address')}</td>
+          <td class="lbl">走行K</td><td>${val('mileage')}</td>
+        </tr>
+      </table>
+
+      <table style="margin-bottom:2px;">
+        <colgroup><col style="width:20%"><col style="width:54%"><col style="width:9%"><col style="width:17%"></colgroup>
+        <tr>
+          <td class="lbl" style="height:18px;">お客様依頼事項</td>
+          <td colspan="3" style="height:18px;">
+            <table style="border:none;width:100%;"><tr>
+              <td style="border:none;width:14%;padding:0" class="lbl">代車</td>
+              <td style="border:none;width:36%;padding:0 4px">${val('rental')}</td>
+              <td style="border:none;width:18%;padding:0" class="lbl">型式指定</td>
+              <td style="border:none;width:32%;padding:0 4px">${val('model')}</td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="6" class="req-cell">${val('request')}</td>
+          <td rowspan="4" style="vertical-align:top;padding:2px;">
+            <table style="border:none;width:100%;">
+              <tr style="height:18px;"><td class="lbl" style="border:1px solid #555;width:38%;">自賠責</td><td style="border:1px solid #555;text-align:right;padding:0 3px;">${val('jibaiseki')}</td></tr>
+              <tr style="height:18px;"><td class="lbl" style="border:1px solid #555;">重量税</td><td style="border:1px solid #555;text-align:right;padding:0 3px;">${val('jyuryo')}</td></tr>
+              <tr style="height:18px;"><td class="lbl" style="border:1px solid #555;">印紙</td><td style="border:1px solid #555;text-align:right;padding:0 3px;">${val('inshi')}</td></tr>
+              <tr style="height:18px;"><td class="lbl" style="border:1px solid #555;">リサイクル料</td><td style="border:1px solid #555;text-align:right;padding:0 3px;">${val('recycle')}</td></tr>
+            </table>
+          </td>
+          <td class="lbl" style="height:18px;">類別区分</td><td>${val('category')}</td>
+        </tr>
+        <tr style="height:18px;"><td class="lbl">タイヤの溝</td><td>${val('tyre')}</td></tr>
+        <tr style="height:18px;"><td class="lbl">ライニング残存</td><td>${val('lining')}</td></tr>
+        <tr style="height:18px;"><td></td><td></td></tr>
+      </table>
+
+      <table class="work-table" style="margin-bottom:2px;">
+        <colgroup><col style="width:10%"><col style="width:37%"><col style="width:9%"><col style="width:24%"><col style="width:8%"><col style="width:12%"></colgroup>
+        <tr><th>日付</th><th>作　業　内　容</th><th>記号</th><th>使　用　部　品</th><th>数量</th><th>単　価</th></tr>
+        ${workRows}
+      </table>
+
+      <table class="code-table">
+        <tr><td class="lbl">記号</td><td class="lbl">点検</td><td class="lbl">分解</td><td class="lbl">交換</td><td class="lbl">修理</td><td class="lbl">調整</td><td class="lbl">締付</td><td class="lbl">清掃</td><td class="lbl">給油</td><td class="lbl">脱着</td><td class="lbl">板金</td><td class="lbl">塗装</td><td class="lbl" colspan="2">有効期限</td></tr>
+        <tr><td></td><td>V</td><td>○</td><td>×</td><td>△</td><td>A</td><td>T</td><td>C</td><td>L</td><td>D</td><td>B</td><td>P</td><td colspan="2" style="text-align:center">${val('expiry')}</td></tr>
+      </table>`;
+  }
+
+  function goPrint() { showView('prev'); setTimeout(() => window.print(), 200); }
+
+  // ── 保存・読込 ──
+  function collect() {
+    const d = { app:'uketsuke-card', v:1, fields:{}, works };
+    SINGLE_IDS.forEach(id => d.fields[id] = $(id) ? $(id).value : '');
+    return d;
+  }
+  function apply(d) {
+    const f = d.fields || d;             // 新形式 / 旧形式どちらも
+    SINGLE_IDS.forEach(id => { if ($(id)) $(id).value = f[id] || ''; });
+    if (Array.isArray(d.works)) {
+      works = d.works.map(w => ({ inst:w.inst||'',cont:w.cont||'',date:w.date||'',part:w.part||'',qty:w.qty||'',price:w.price||'' }));
+    } else {
+      // 旧フラット形式（w_inst1..18）から復元
+      works = [];
+      for (let i=1; i<=18; i++) {
+        const r = { inst:f['w_inst'+i]||'',cont:f['w_cont'+i]||'',date:f['w_date'+i]||'',part:f['w_part'+i]||'',qty:f['w_qty'+i]||'',price:f['w_price'+i]||'' };
+        if (Object.values(r).some(v=>v)) works.push(r);
+      }
+    }
+    if (!works.length) works = [emptyWork()];
+    renderWorks();
+  }
+  function emptyWork(){ return {inst:'',cont:'',date:'',part:'',qty:'',price:''}; }
+
+  function saveToFile() {
+    const json = JSON.stringify(collect(), null, 2);
+    const now = new Date();
+    const ts = now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'_'+('0'+now.getHours()).slice(-2)+('0'+now.getMinutes()).slice(-2);
+    const name = ($('number').value.trim() || '受付カード') + '_' + ts + '.json';
+    const blob = new Blob([json], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+  function loadFromFile(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try { apply(JSON.parse(ev.target.result)); alert('✅ 読み込みました！'); }
+      catch { alert('❌ 読み込みに失敗しました'); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  }
+  function clearData() {
+    if (!confirm('入力内容をすべてクリアしますか？')) return;
+    SINGLE_IDS.forEach(id => { if ($(id)) $(id).value = ''; });
+    works = [emptyWork()]; renderWorks();
+  }
+
+  // ── 起動 ──
+  works = [emptyWork(), emptyWork(), emptyWork()];
+  renderWorks();
 </script>
 </body>
 </html>
