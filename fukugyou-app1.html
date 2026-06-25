@@ -223,18 +223,24 @@ textarea.form-input{resize:vertical;min-height:52px;}
     <div class="card-title">新規タスク追加</div>
     <label class="form-label">日付</label>
     <input type="date" class="form-input" id="inp-date">
-    <label class="form-label">金額（コースをタップする前に選んでね）</label>
+    <label class="form-label">① コース選択</label>
+    <div class="selected-display" id="sel-disp">
+      <span class="selected-name" id="sel-name"></span>
+      <button class="clear-btn" id="cur-clear-btn">×</button>
+    </div>
+    <div class="parent-grid" id="parent-grid"></div>
+    <label class="form-label">② 金額設定</label>
     <div class="price-toggle">
       <div class="price-btn selected" data-price="3000">¥3,000</div>
       <div class="price-btn" data-price="4000">¥4,000</div>
     </div>
-    <label class="form-label">コース選択（複数えらべます）</label>
+    <button class="btn btn-green" id="add-btn">③ ＋ 追加（リストに足す）</button>
+    <label class="form-label" style="margin-top:12px;">追加したコース（決定で一覧へ）</label>
     <div class="sel-list" id="sel-list"></div>
     <button class="clear-btn" id="clear-btn" style="display:none;font-size:13px;">✕ 全部クリア</button>
-    <div class="parent-grid" id="parent-grid"></div>
     <label class="form-label">メモ（任意・全コース共通）</label>
     <textarea class="form-input" id="inp-memo" placeholder="備考など"></textarea>
-    <button class="btn btn-primary" id="add-btn">＋ まとめて追加する</button>
+    <button class="btn btn-primary" id="commit-btn">④ ✅ 決定（一覧に登録）</button>
   </div>
 </div>
 
@@ -486,17 +492,15 @@ const DEFAULT_GROUPS=[
   {parent:"和白",courses:["和白下1補助","和白下5上4","和白下補助3上"]},
   {parent:"直方",courses:["直方補助下1上1","直方下3上2"]},
   {parent:"前原",courses:["前原下4上3"]},
-  {parent:"福岡",courses:["福岡下9上6","福岡上8","福岡上14"]},
+  {parent:"福岡",courses:["福岡下9上6","福岡上8","福岡上14","福岡中央下11上13"]},
   {parent:"博多北",courses:["博多北上9"]},
   {parent:"伊田",courses:["伊田下1"]},
   {parent:"福間",courses:["福間下補助"]},
   {parent:"宗像",courses:["宗像下5上4"]},
   {parent:"飯塚",courses:["飯塚上3"]},
   {parent:"筑紫野",courses:["筑紫野下補助"]},
-  {parent:"福西",courses:["福西補助下上"]},
-  {parent:"福岡東",courses:["福岡東下補助上2","福岡東下4上1"]},
-  {parent:"福岡西",courses:["福岡西下2"]},
-  {parent:"福岡中央",courses:["福岡中央下11上13"]}
+  {parent:"福西",courses:["福西補助下上","福岡西下2"]},
+  {parent:"福岡東",courses:["福岡東下補助上2","福岡東下4上1"]}
 ];
 
 const SKEY='fukugyou_v3';
@@ -505,7 +509,7 @@ function save(){try{localStorage.setItem(SKEY,JSON.stringify({tasks:st.tasks,gro
 
 const now=new Date();
 const loaded=load();
-const st={year:now.getFullYear(),month:now.getMonth()+1,price:3000,course:'',selected:[],tasks:loaded.tasks,groups:loaded.groups};
+const st={year:now.getFullYear(),month:now.getMonth()+1,price:3000,current:'',selected:[],tasks:loaded.tasks,groups:loaded.groups};
 
 // 初期日付
 (function(){
@@ -598,17 +602,23 @@ function openManage(){
 }
 function closeManage(){document.getElementById('manage-overlay').classList.remove('open');}
 
+// ① コース選択 → st.current（単数）にセット
 function selectCourse(name){
-  // 同じコースが未選択なら、今選んでいる金額つきで選択リストに追加（複数可）
-  if(!st.selected.some(s=>s.course===name)) st.selected.push({course:name,price:st.price});
-  renderSelected();
+  st.current=name;
+  renderCurrent();
   closeSub();
 }
+function renderCurrent(){
+  document.getElementById('sel-name').textContent=st.current||'';
+  document.getElementById('sel-disp').classList.toggle('visible',!!st.current);
+}
+function clearCurrent(){st.current='';renderCurrent();}
+// ③ 追加リスト（決定で一覧へ）
 function renderSelected(){
   const box=document.getElementById('sel-list');
   const clr=document.getElementById('clear-btn');
   if(!st.selected.length){
-    box.innerHTML='<span class="sel-empty">↓ コースをタップで追加（何件でもOK）</span>';
+    box.innerHTML='<span class="sel-empty">「追加」したコースがここに並びます</span>';
     clr.style.display='none';
     return;
   }
@@ -646,19 +656,29 @@ function addCourse(){
   toast('✅ コースを追加しました！');
 }
 
+// ③ 追加：選択中コース＋金額を「追加リスト」に足す
 document.getElementById('add-btn').onclick=function(){
+  if(!st.current){toast('❌ コースを選択してください',true);return;}
+  st.selected.push({course:st.current,price:st.price});
+  clearCurrent();
+  renderSelected();
+  toast('➕ リストに追加（決定で一覧へ）');
+};
+// 選択中コースの×ボタン
+document.getElementById('cur-clear-btn').onclick=clearCurrent;
+// ④ 決定：追加リストを月の一覧へ登録
+document.getElementById('commit-btn').onclick=function(){
   const date=document.getElementById('inp-date').value;
   const memo=document.getElementById('inp-memo').value.trim();
   if(!date){toast('❌ 日付を選択してください',true);return;}
-  if(!st.selected.length){toast('❌ コースを選択してください',true);return;}
-  // 選択した全コースを一覧に追加（同じ日付・メモ／金額はコースごと）
+  if(!st.selected.length){toast('❌ 「追加」でコースをリストに入れてください',true);return;}
   st.selected.forEach((s,i)=>st.tasks.push({id:Date.now()+i,date,course:s.course,price:s.price,memo}));
   const n=st.selected.length;
   save();
   document.getElementById('inp-memo').value='';
   clearCourse();
   renderAll();
-  toast(`✅ ${n}件 追加しました！`);
+  toast(`✅ ${n}件 一覧に登録しました！`);
 };
 
 function renderList(tasks){
@@ -1061,9 +1081,27 @@ snapshot();
 updateLastBk();
 refreshBanner();
 
+// コース合併の移行（既存の保存データにも適用）：福岡西→福西、福岡中央→福岡
+(function migrateGroups(){
+  let changed=false;
+  const mergeInto=(fromName,toName)=>{
+    const fi=st.groups.findIndex(g=>g.parent===fromName);
+    if(fi<0)return;
+    let to=st.groups.find(g=>g.parent===toName);
+    if(!to){to={parent:toName,courses:[]};st.groups.push(to);}
+    st.groups[fi].courses.forEach(c=>{if(!to.courses.includes(c))to.courses.push(c);});
+    st.groups.splice(fi,1);
+    changed=true;
+  };
+  mergeInto('福岡西','福西');
+  mergeInto('福岡中央','福岡');
+  if(changed)save();
+})();
+
 renderGrid();
 renderAll();
 renderSelected();
+renderCurrent();
 </script>
 </body>
 </html>
