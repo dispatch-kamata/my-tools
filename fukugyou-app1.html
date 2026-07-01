@@ -279,11 +279,13 @@ textarea.form-input{resize:vertical;min-height:52px;}
   <div id="iv-tab-edit" class="iv-pane active">
     <div class="card">
       <div class="card-title">請求情報</div>
-      <div class="form-group"><label class="form-label">請求書番号</label><input class="form-input" id="invoiceNumber" value=""></div>
+      <div id="ivBillingLabel" style="font-size:11px;color:var(--blue);font-weight:700;margin-bottom:10px;">請求対象：自動設定</div>
+      <div class="form-group"><label class="form-label">🔒 請求書番号（自動・締め日）</label><input class="form-input" id="invoiceNumber" value="" readonly tabindex="-1" style="background:#f1f5f9;color:#475569;pointer-events:none;"></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">請求日</label><input class="form-input" id="invoiceDate" type="date"></div>
-        <div class="form-group"><label class="form-label">お支払期限</label><input class="form-input" id="dueDate" type="date"></div>
+        <div class="form-group"><label class="form-label">🔒 請求日（自動）</label><input class="form-input" id="invoiceDate" type="date" readonly tabindex="-1" style="background:#f1f5f9;color:#475569;pointer-events:none;"></div>
+        <div class="form-group"><label class="form-label">🔒 お支払期限（自動）</label><input class="form-input" id="dueDate" type="date" readonly tabindex="-1" style="background:#f1f5f9;color:#475569;pointer-events:none;"></div>
       </div>
+      <p style="font-size:10px;color:var(--txt-m);margin-top:2px;line-height:1.6;">※ 番号・日付は「請求対象の月」から自動で決まります（締め日＝月末、請求日＝翌月1日、期限＝翌月末）。月は「記録」タブで切り替えます。</p>
     </div>
     <div class="card">
       <div class="card-title">取引先情報</div>
@@ -717,6 +719,7 @@ document.getElementById('tabs').addEventListener('click',function(e){
   ['record','list','invoice'].forEach(name=>{
     document.getElementById('page-'+name).classList.toggle('active',tab.dataset.tab===name);
   });
+  if(tab.dataset.tab==='invoice')ivSetInvoiceMeta();
   renderAll();
 });
 
@@ -768,16 +771,28 @@ document.getElementById('imp-input').addEventListener('change',function(e){
 const CLIENT_PRESETS={shindo:{name:'進藤運輸倉庫有限会社',address:'福岡県福岡市博多区諸岡3丁目24番1号'}};
 let items=[];
 
-function ivSetDefaultDates(){
-  const n=new Date();const y=n.getFullYear(),m=n.getMonth()+1;
-  const last=new Date(y,m,0).getDate();
-  const iDate=`${y}-${String(m).padStart(2,'0')}-01`;
-  const dDate=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
-  const num=`${y}${String(m).padStart(2,'0')}${String(last).padStart(2,'0')}`;
-  const inv=document.getElementById('invoiceNumber'),iEl=document.getElementById('invoiceDate'),dEl=document.getElementById('dueDate');
-  if(!inv.value)inv.value=num;
-  if(!iEl.value)iEl.value=iDate;
-  if(!dEl.value)dEl.value=dDate;
+// 請求対象の月（記録タブで選んでいる st.year/st.month）から番号・日付を自動決定
+//  ・請求書番号 = 対象月の締め日(末日) YYYYMMDD 例:20260630
+//  ・請求日     = 翌月1日            例:2026-07-01
+//  ・お支払期限 = 翌月末日           例:2026-07-31
+function ivInvoiceMeta(){
+  const by=st.year,bm=st.month;
+  const lastB=new Date(by,bm,0).getDate();
+  const num=`${by}${String(bm).padStart(2,'0')}${String(lastB).padStart(2,'0')}`;
+  const ny=bm===12?by+1:by, nm=bm===12?1:bm+1;
+  const lastN=new Date(ny,nm,0).getDate();
+  const iDate=`${ny}-${String(nm).padStart(2,'0')}-01`;
+  const dDate=`${ny}-${String(nm).padStart(2,'0')}-${String(lastN).padStart(2,'0')}`;
+  return {num,iDate,dDate,by,bm,lastB};
+}
+// 自動値を（読み取り専用の）フィールドへ反映＋対象月ラベルを更新
+function ivSetInvoiceMeta(){
+  const m=ivInvoiceMeta();
+  document.getElementById('invoiceNumber').value=m.num;
+  document.getElementById('invoiceDate').value=m.iDate;
+  document.getElementById('dueDate').value=m.dDate;
+  const lbl=document.getElementById('ivBillingLabel');
+  if(lbl)lbl.textContent=`請求対象：${m.by}年${m.bm}月分（締め ${m.bm}/${m.lastB}）→ 番号・日付は自動`;
 }
 
 function showTab(n){
@@ -856,6 +871,7 @@ function loadFromRecords(){
   const map={};
   tasks.forEach(t=>{const k=t.course+'|'+t.price;if(!map[k])map[k]={name:t.course,unit_price:t.price,qty:0,amount:0};map[k].qty++;map[k].amount+=t.price;});
   items=Object.values(map);
+  ivSetInvoiceMeta();
   renderItems();
   alert('今月（'+ml()+'）の記録を取り込みました！\n合計: ¥'+items.reduce((s,i)=>s+i.amount,0).toLocaleString());
 }
@@ -1039,8 +1055,8 @@ function doPrint(){
   setTimeout(()=>{window.print();setTimeout(()=>{document.getElementById('printArea').innerHTML='';document.title='副業管理アプリ';},2000);},150);
 }
 
-ivSetDefaultDates();
 loadInvoiceData();
+ivSetInvoiceMeta();
 renderItems();
 
 function toast(msg,isErr){
