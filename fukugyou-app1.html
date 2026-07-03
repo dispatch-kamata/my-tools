@@ -43,6 +43,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
 .selected-name{font-size:14px;font-weight:600;color:var(--accent);}
 .sel-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:8px;}
 .sel-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.1);border:1.5px solid var(--accent);color:var(--accent);border-radius:16px;padding:6px 10px;font-size:13px;font-weight:700;}
+.sel-chip.gaichu{background:rgba(234,108,0,.1);border-color:var(--accent2);color:var(--accent2);}
 .sel-chip .px{background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-family:'DM Mono',monospace;}
 .sel-chip button{background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;line-height:1;padding:0;}
 .sel-empty{font-size:12px;color:var(--muted);}
@@ -71,6 +72,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
 .lastbk{font-size:11px;color:var(--muted);margin-top:8px;text-align:center;}
 .task-item{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--surface);border-radius:10px;margin-bottom:7px;border:1px solid var(--border);border-left:4px solid var(--accent);}
 .task-item.p4{border-left-color:var(--accent2);}
+.task-item.gaichu{border-left-color:var(--accent2);border-left-width:5px;}
 .task-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:2px;}
 .task-course{font-size:13px;font-weight:500;}
 .task-price{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;}
@@ -193,7 +195,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
 <body>
 
 <div class="app-header">
-  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.0</span></div>
+  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.1</span></div>
   <div class="tabs" id="tabs">
     <div class="tab active" data-tab="record">📋 記録</div>
     <div class="tab" data-tab="list">📊 一覧</div>
@@ -235,6 +237,14 @@ textarea.form-input{resize:vertical;min-height:52px;}
       <div class="price-btn" data-price="4000">¥4,000</div>
     </div>
     <button class="btn btn-green" id="add-btn">③ ＋ 追加（リストに足す）</button>
+
+    <div id="gaichu-box" style="margin-top:14px;padding:11px;border:1.5px dashed var(--accent2);border-radius:11px;background:rgba(234,108,0,.05);">
+      <label class="form-label" style="color:var(--accent2);">💼 外注費（アプリ開発費など）を請求に足す</label>
+      <input type="text" class="form-input" id="gaichu-name" value="外注費" placeholder="名称（例：アプリ開発費）" style="margin-bottom:8px;">
+      <input type="number" class="form-input" id="gaichu-amount" inputmode="numeric" placeholder="金額（円）を手入力" style="margin-bottom:8px;">
+      <button class="btn" id="gaichu-add-btn" style="background:var(--accent2);color:#fff;">＋ 外注費をリストに足す</button>
+    </div>
+
     <label class="form-label" style="margin-top:12px;">追加したコース（決定で一覧へ）</label>
     <div class="sel-list" id="sel-list"></div>
     <button class="clear-btn" id="clear-btn" style="display:none;font-size:13px;">✕ 全部クリア</button>
@@ -624,7 +634,7 @@ function renderSelected(){
     clr.style.display='none';
     return;
   }
-  box.innerHTML=st.selected.map((s,i)=>`<span class="sel-chip">${s.course}<span class="px">¥${s.price.toLocaleString()}</span><button onclick="removeSel(${i})">✕</button></span>`).join('');
+  box.innerHTML=st.selected.map((s,i)=>`<span class="sel-chip${s.gaichu?' gaichu':''}">${s.gaichu?'💼':''}${s.course}<span class="px">¥${s.price.toLocaleString()}</span><button onclick="removeSel(${i})">✕</button></span>`).join('');
   clr.style.display='inline-block';
 }
 window.removeSel=function(i){st.selected.splice(i,1);renderSelected();};
@@ -666,6 +676,16 @@ document.getElementById('add-btn').onclick=function(){
   renderSelected();
   toast('➕ リストに追加（決定で一覧へ）');
 };
+// 💼 外注費（アプリ開発費など）をリストに足す：名称＋自由金額
+document.getElementById('gaichu-add-btn').onclick=function(){
+  const name=document.getElementById('gaichu-name').value.trim()||'外注費';
+  const amt=parseInt(document.getElementById('gaichu-amount').value)||0;
+  if(amt<=0){toast('❌ 外注費の金額を入れてください',true);return;}
+  st.selected.push({course:name,price:amt,gaichu:true});
+  document.getElementById('gaichu-amount').value='';
+  renderSelected();
+  toast('💼 外注費をリストに追加');
+};
 // 選択中コースの×ボタン
 document.getElementById('cur-clear-btn').onclick=clearCurrent;
 // ④ 決定：追加リストを月の一覧へ登録
@@ -674,7 +694,7 @@ document.getElementById('commit-btn').onclick=function(){
   const memo=document.getElementById('inp-memo').value.trim();
   if(!date){toast('❌ 日付を選択してください',true);return;}
   if(!st.selected.length){toast('❌ 「追加」でコースをリストに入れてください',true);return;}
-  st.selected.forEach((s,i)=>st.tasks.push({id:Date.now()+i,date,course:s.course,price:s.price,memo}));
+  st.selected.forEach((s,i)=>st.tasks.push({id:Date.now()+i,date,course:s.course,price:s.price,memo,gaichu:!!s.gaichu}));
   const n=st.selected.length;
   save();
   document.getElementById('inp-memo').value='';
@@ -686,14 +706,14 @@ document.getElementById('commit-btn').onclick=function(){
 function renderList(tasks){
   const c=document.getElementById('task-list');
   if(!tasks.length){c.innerHTML='<div class="empty">📭 この月のタスクはありません</div>';return;}
-  c.innerHTML=tasks.map(t=>`<div class="task-item${t.price===4000?' p4':''}">
+  c.innerHTML=tasks.map(t=>`<div class="task-item${t.gaichu?' gaichu':t.price===4000?' p4':''}">
     <div>
       <div class="task-date">${fmtDate(t.date)}</div>
-      <div class="task-course">${t.course}</div>
+      <div class="task-course">${t.gaichu?'💼 ':''}${t.course}${t.gaichu?' <span style="font-size:10px;color:#fff;background:var(--accent2);border-radius:4px;padding:1px 5px;font-weight:700;">外注費</span>':''}</div>
       ${t.memo?`<div style="font-size:10px;color:var(--muted);margin-top:1px">${t.memo}</div>`:''}
     </div>
     <div style="display:flex;align-items:center">
-      <span class="task-price ${t.price===3000?'c3':'c4'}">¥${t.price.toLocaleString()}</span>
+      <span class="task-price ${t.gaichu?'c4':t.price===3000?'c3':'c4'}">¥${t.price.toLocaleString()}</span>
       <button class="task-del" data-id="${t.id}">×</button>
     </div>
   </div>`).join('');
