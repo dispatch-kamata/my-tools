@@ -193,7 +193,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
 <body>
 
 <div class="app-header">
-  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.2</span></div>
+  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.3</span></div>
   <div class="tabs" id="tabs">
     <div class="tab active" data-tab="record">📋 記録</div>
     <div class="tab" data-tab="list">📊 一覧</div>
@@ -229,11 +229,13 @@ textarea.form-input{resize:vertical;min-height:52px;}
       <button class="clear-btn" id="cur-clear-btn">×</button>
     </div>
     <div class="parent-grid" id="parent-grid"></div>
-    <label class="form-label">② 金額設定</label>
+    <label class="form-label">② 金額設定（便を選ぶと自動で入る・手動で訂正OK）</label>
     <div class="price-toggle">
       <div class="price-btn selected" data-price="3000">¥3,000</div>
       <div class="price-btn" data-price="4000">¥4,000</div>
     </div>
+    <input id="manual-price" type="number" inputmode="numeric" class="form-input" style="margin-top:6px;" placeholder="金額（手動で入力・訂正）">
+    <div id="price-hint" style="font-size:11px;color:#888;margin-top:3px;">便を選ぶと自動で金額が入ります（違うときは手で直せます）</div>
     <button class="btn btn-green" id="add-btn">③ ＋ 追加（リストに足す）</button>
     <label class="form-label" style="margin-top:12px;">追加したコース（決定で一覧へ）</label>
     <div class="sel-list" id="sel-list"></div>
@@ -506,6 +508,24 @@ const DEFAULT_GROUPS=[
   {parent:"福岡東",courses:["福岡東下補助上2","福岡東下4上1"]}
 ];
 
+// 便ごとの単価マスター（配車の手当＝副業単価。実請求データ＋手当で作成）
+// ・便を選ぶと自動で金額が入る。ここに無い便（営業便など未確定分）は自動入力せず手動で入れる
+// ・手動でいつでも訂正できる（このマスターは"初期値"を入れるだけ。過去データ・請求書には一切影響しない）
+const COURSE_PRICE = {
+  '伊田下1':4000, '前原下4上3':4000, '博多北上9':3000,
+  '博多北増下1上回送':4000, '博多北増下2上1':4000, '博多南下10上7':4000,
+  '博多南下6上3':3000, '博多南下7上4':3000, '博多南下回送上8':3000,
+  '和白下1補助':4000, '和白下5上4':4000, '和白下補助3上':4000,
+  '城南下3上1':4000, '城南下補助3博多北上':4000, '宗像下5上4':4000,
+  '直方下3上2':5000, '直方補助下1上1':3000, '福南下補助2上':3000,
+  '福岡上14':4000, '福岡上8':3000, '福岡下9上6':3000,
+  '福岡中央下11上13':3000, '福岡増下2上回送':4000, '福岡東下4上1':3000,
+  '福岡東下補助上2':3000, '福岡西下2':4000, '福西下4上4':4000,
+  '福西補助下上':4000, '福間下補助':4000, '筑紫下2福南上1':3000,
+  '筑紫下2補助':4000, '筑紫下3上2':3000, '筑紫野下補助':3000,
+  '行橋下2上1':4000, '飯塚上3':3000, '飯塚直方下臨時':4000,
+};
+
 const SKEY='fukugyou_v3';
 function load(){try{const s=localStorage.getItem(SKEY);if(s){const p=JSON.parse(s);return{tasks:p.tasks||[],groups:p.groups||JSON.parse(JSON.stringify(DEFAULT_GROUPS))};}}catch(e){}return{tasks:[],groups:JSON.parse(JSON.stringify(DEFAULT_GROUPS))};}
 function save(){try{localStorage.setItem(SKEY,JSON.stringify({tasks:st.tasks,groups:st.groups}));}catch(e){}snapshot();}
@@ -605,9 +625,23 @@ function openManage(){
 }
 function closeManage(){document.getElementById('manage-overlay').classList.remove('open');}
 
-// ① コース選択 → st.current（単数）にセット
+// 金額UIを st.price に同期（トグルの選択状態＋手動入力欄）
+function syncPriceUI(){
+  document.querySelectorAll('.price-btn').forEach(b=>b.classList.toggle('selected',Number(b.dataset.price)===st.price));
+  const mp=document.getElementById('manual-price');
+  if(mp && document.activeElement!==mp) mp.value=st.price;
+}
+// ① コース選択 → st.current にセット＋単価を自動入力（マスターにあれば）
 function selectCourse(name){
   st.current=name;
+  const hint=document.getElementById('price-hint');
+  if(COURSE_PRICE[name]!=null){
+    st.price=COURSE_PRICE[name];
+    syncPriceUI();
+    if(hint)hint.textContent=`自動: ¥${st.price.toLocaleString()}（手動で変更できます）`;
+  }else{
+    if(hint)hint.textContent='この便は単価が未登録です・金額を手で入れてください';
+  }
   renderCurrent();
   closeSub();
 }
@@ -734,8 +768,14 @@ document.querySelectorAll('.month-btn').forEach(btn=>btn.addEventListener('click
 
 document.querySelectorAll('.price-btn').forEach(btn=>btn.addEventListener('click',function(){
   st.price=Number(this.dataset.price);
-  document.querySelectorAll('.price-btn').forEach(b=>b.classList.toggle('selected',b===this));
+  syncPriceUI();
 }));
+// 手動で金額を訂正（どんな金額でもOK）
+(function(){const mp=document.getElementById('manual-price');if(mp){mp.addEventListener('input',function(){
+  st.price=Number(this.value)||0;
+  document.querySelectorAll('.price-btn').forEach(b=>b.classList.toggle('selected',Number(b.dataset.price)===st.price));
+});}})();
+syncPriceUI();
 
 document.getElementById('clear-btn').onclick=clearCourse;
 document.getElementById('sub-cancel').onclick=closeSub;
