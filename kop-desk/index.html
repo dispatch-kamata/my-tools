@@ -1046,17 +1046,24 @@ async function refresh(){
     const team = await getJSON(FM + "teams?id=" + D.fotmob.teamId);
     const { newest } = applyTeam(team);
 
+    /* 試合スタッツは別枠のtry。ここで失敗しても、上で取れた日程・スコア・
+       負傷者の更新は捨てずに反映する（以前は巻き添えで全部失われていた）。
+       ※ matchDetails は FotMob のCDNが Vary:Origin を付けずにキャッシュするため、
+         Originなしのリクエストが先にキャッシュを作るとブラウザから読めなくなる。
+         ccode3 を付けて、汚染されにくいキャッシュキーを使っている。 */
     if(newest){
-      const prev = (D.results || [])[0];
-      const md = await getJSON(FM + "matchDetails?matchId=" + newest.fmMatchId);
-      const built = buildResult(md, prev);
-      if(built){
-        /* 保存データと同じ試合なら、書いてあるコメントと映像リンクは残す */
-        if(prev && prev.fmMatchId === built.fmMatchId){
-          built.ht = prev.ht; built.notes = prev.notes; built.video = prev.video;
+      try{
+        const prev = (D.results || [])[0];
+        const md = await getJSON(FM + "matchDetails?matchId=" + newest.fmMatchId + "&ccode3=JPN");
+        const built = buildResult(md, prev);
+        if(built){
+          /* 保存データと同じ試合なら、書いてあるコメントと映像リンクは残す */
+          if(prev && prev.fmMatchId === built.fmMatchId){
+            built.ht = prev.ht; built.notes = prev.notes; built.video = prev.video;
+          }
+          D.results = [built].concat((D.results || []).filter(r => r.fmMatchId !== built.fmMatchId)).slice(0,3);
         }
-        D.results = [built].concat((D.results || []).filter(r => r.fmMatchId !== built.fmMatchId)).slice(0,3);
-      }
+      }catch(e){ /* スタッツは data.js の保存分をそのまま使う */ }
     }
     render();
     const t = new Date();

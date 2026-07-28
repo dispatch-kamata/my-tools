@@ -301,7 +301,7 @@ window.KOP_DATA = {
   /* ── データ接続の設計メモ ─────────────────────────────── */
   feeds: [
     { name:"日程・スコア・負傷者", level:"自動取得中", cls:"auto", text:"FotMobの公開JSON。APIキー不要・CORS許可済みなので、このページから直接読める。起動するたびに日程とスコア、負傷者リストを取り直している。", code:"fotmob.com/api/data/teams?id=8650" },
-    { name:"試合スタッツ・スタメン・採点", level:"自動取得中", cls:"auto", text:"同じくFotMob。支配率やシュート数、選手ごとの採点、マン・オブ・ザ・マッチまで取れる。試合が終わると自動で下の棒グラフに反映される。", code:"fotmob.com/api/data/matchDetails?matchId=..." },
+    { name:"試合スタッツ・スタメン・採点", level:"自動＋保存", cls:"semi", text:"同じくFotMob。支配率やシュート数、選手ごとの採点、マン・オブ・ザ・マッチまで取れる。ただしこのURLはFotMob側のキャッシュの都合でブラウザから読めなくなることがあるため、取れたら更新・ダメなら data.js の保存分を表示する作りにしてある。棒グラフが消えることはない。", code:"fotmob.com/api/data/matchDetails?matchId=...&ccode3=JPN" },
     { name:"クラブのエンブレム", level:"全自動", cls:"auto", text:"プレミアリーグ公式CDNの200px PNG。クラブごとの番号（Liverpool=t14）を data.js の clubs に書くだけでロゴが出る。番号が分からないクラブは code を null にすれば頭文字マークで表示される。", code:"resources.premierleague.com/premierleague/badges/100/t14@x2.png" },
     { name:"得点シーン映像", level:"半自動", cls:"semi", text:"LFC公式YouTubeチャンネルのRSS。APIキー不要、無料、無制限。今は試合ごとに公式ページのリンクを data.js に入れている。", code:"youtube.com/feeds/videos.xml?channel_id=..." },
     { name:"記者の移籍記事", level:"未接続", cls:"semi", text:"Google News RSSを記者名で絞り込む方式。Paul JoyceとDavid Ornsteinは署名記事が多いのでこれでかなり拾える。RSSはCORSが効かないので、読むには中継役（PHPなど）が要る。", code:'news.google.com/rss/search?q="Paul+Joyce"+Liverpool' },
