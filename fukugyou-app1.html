@@ -102,6 +102,35 @@ textarea.form-input{resize:vertical;min-height:52px;}
 .inv-table tr:nth-child(even) td{background:#f8f9ff;}
 .flex-row{display:flex;gap:8px;}.flex-row>*{flex:1;}
 
+/* ===== v1.4 入力まわり ===== */
+.date-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+.date-row .form-input{margin-bottom:0;flex:1;min-width:0;}
+.date-step{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);min-width:40px;height:42px;font-size:17px;cursor:pointer;font-family:inherit;}
+.date-today{padding:0 12px;font-size:13px;font-weight:700;color:var(--accent);border-color:var(--accent);}
+.date-wd{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.date-wd b{color:var(--text);}
+.day-done{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:8px 11px;margin-bottom:10px;font-size:12px;color:#166534;line-height:1.7;display:none;}
+.day-done.show{display:block;}
+.quick-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.quick-chip{background:#fff7ed;border:1.5px solid var(--accent2);color:#9a3412;border-radius:18px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.quick-chip .qp{font-family:'DM Mono',monospace;font-size:11px;opacity:.75;margin-left:4px;}
+.month-label.jump{cursor:pointer;}
+/* 一覧：日付ごと */
+.day-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);margin:12px 2px 5px;font-family:'DM Mono',monospace;}
+.day-head b{color:var(--text);font-size:13px;}
+.day-head .wk-sun{color:var(--red);}.day-head .wk-sat{color:var(--accent);}
+.task-item{cursor:pointer;}
+.task-item.gaichu{border-left-color:#7c3aed;}
+.edit-row{display:flex;gap:8px;}.edit-row>*{flex:1;}
+/* 請求書：対象月バー */
+.iv-month{display:flex;align-items:center;justify-content:space-between;background:#fff;border:2px solid #1A7FC4;border-radius:12px;padding:8px 10px;margin-bottom:10px;}
+.iv-month .mid{text-align:center;}
+.iv-month .mid .t{font-size:16px;font-weight:700;color:#1A7FC4;}
+.iv-month .mid .s{font-size:11px;color:#3A3A4A;font-family:'DM Mono',monospace;}
+.iv-mbtn{background:#F0F7FB;border:1px solid #C0D8E8;border-radius:8px;color:#1A7FC4;width:40px;height:40px;font-size:20px;cursor:pointer;}
+.iv-src{font-size:11px;color:#3A3A4A;background:#F0F7FB;border-radius:8px;padding:7px 10px;margin-bottom:10px;line-height:1.6;}
+details.past summary{cursor:pointer;font-size:12px;font-weight:700;color:#1A7FC4;padding:4px 0;}
+
 /* ===== コース管理オーバーレイ ===== */
 .manage-group{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
 .manage-ghead{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);padding:8px 12px;font-weight:700;font-size:14px;}
@@ -193,7 +222,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
 <body>
 
 <div class="app-header">
-  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.3</span></div>
+  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.4</span></div>
   <div class="tabs" id="tabs">
     <div class="tab active" data-tab="record">📋 記録</div>
     <div class="tab" data-tab="list">📊 一覧</div>
@@ -222,7 +251,18 @@ textarea.form-input{resize:vertical;min-height:52px;}
   <div class="card">
     <div class="card-title">新規タスク追加</div>
     <label class="form-label">日付</label>
-    <input type="date" class="form-input" id="inp-date">
+    <div class="date-row">
+      <button class="date-step" id="date-prev" aria-label="前の日">‹</button>
+      <input type="date" class="form-input" id="inp-date">
+      <button class="date-step" id="date-next" aria-label="次の日">›</button>
+      <button class="date-step date-today" id="date-today">今日</button>
+    </div>
+    <div class="date-wd" id="date-wd"></div>
+    <div class="day-done" id="day-done"></div>
+    <div id="quick-wrap" style="display:none">
+      <label class="form-label">⚡ よく使う便（タップでそのままリストへ）</label>
+      <div class="quick-grid" id="quick-grid"></div>
+    </div>
     <label class="form-label">① コース選択</label>
     <div class="selected-display" id="sel-disp">
       <span class="selected-name" id="sel-name"></span>
@@ -243,6 +283,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
     <label class="form-label">メモ（任意・全コース共通）</label>
     <textarea class="form-input" id="inp-memo" placeholder="備考など"></textarea>
     <button class="btn btn-primary" id="commit-btn">④ ✅ 決定（一覧に登録）</button>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;">💡 便が1つだけの日は、①で選んだらそのまま④決定でOK（③は省略できます）</div>
   </div>
 </div>
 
@@ -271,6 +312,11 @@ textarea.form-input{resize:vertical;min-height:52px;}
 
 <!-- 請求書タブ -->
 <div class="page" id="page-invoice">
+  <div class="iv-month">
+    <button class="iv-mbtn" onclick="ivChangeMonth(-1)" aria-label="前の月">‹</button>
+    <div class="mid"><div class="t" id="ivMonthLabel"></div><div class="s" id="ivMonthSub"></div></div>
+    <button class="iv-mbtn" onclick="ivChangeMonth(1)" aria-label="次の月">›</button>
+  </div>
   <div class="iv-tabs">
     <button class="iv-tab active" onclick="showTab('edit')">📋 基本情報</button>
     <button class="iv-tab" onclick="showTab('items')">📦 品目</button>
@@ -287,7 +333,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
         <div class="form-group"><label class="form-label">🔒 請求日（自動）</label><input class="form-input" id="invoiceDate" type="date" readonly tabindex="-1" style="background:#f1f5f9;color:#475569;pointer-events:none;"></div>
         <div class="form-group"><label class="form-label">🔒 お支払期限（自動）</label><input class="form-input" id="dueDate" type="date" readonly tabindex="-1" style="background:#f1f5f9;color:#475569;pointer-events:none;"></div>
       </div>
-      <p style="font-size:10px;color:var(--txt-m);margin-top:2px;line-height:1.6;">※ 番号・日付は「請求対象の月」から自動で決まります（締め日＝月末、請求日＝翌月1日、期限＝翌月末）。月は「記録」タブで切り替えます。</p>
+      <p style="font-size:10px;color:var(--txt-m);margin-top:2px;line-height:1.6;">※ 番号・日付は「請求対象の月」から自動で決まります（締め日＝月末、請求日＝翌月1日、期限＝翌月末）。月は上の ‹ › で切り替えます（最初は先月分になっています）。</p>
     </div>
     <div class="card">
       <div class="card-title">取引先情報</div>
@@ -325,7 +371,8 @@ textarea.form-input{resize:vertical;min-height:52px;}
 
   <!-- 品目 -->
   <div id="iv-tab-items" class="iv-pane">
-    <button class="btn btn-blue" onclick="loadFromRecords()" style="margin-bottom:12px;">📥 「記録」タブの今月分を取り込む</button>
+    <div class="iv-src" id="ivSrcNote"></div>
+    <button class="btn btn-blue" id="ivReloadBtn" onclick="loadFromRecords()" style="margin-bottom:12px;">🔄 記録から取り込み直す</button>
     <div class="total-bar">
       <span class="label">ご請求金額</span>
       <span class="amount" id="totalDisplay">¥0</span>
@@ -407,8 +454,8 @@ textarea.form-input{resize:vertical;min-height:52px;}
       <button class="btn btn-green mt-8" onclick="addItem()">＋ この品目を追加</button>
     </div>
     <div class="card mt-12" style="padding:12px">
-      <div class="card-title" style="margin-bottom:10px">過去データ読込</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <details class="past"><summary>過去データ読込（1〜4月の旧請求書・サンプル）</summary>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <button class="btn btn-outline btn-sm" style="width:100%;text-align:center" onclick="loadJanuary()">📄 1月分 ¥198,000</button>
         <button class="btn btn-outline btn-sm" style="width:100%;text-align:center" onclick="loadFebruary()">📄 2月分 ¥162,000</button>
         <button class="btn btn-outline btn-sm" style="width:100%;text-align:center" onclick="loadMarch()">📄 3月分 ¥180,000</button>
@@ -418,6 +465,7 @@ textarea.form-input{resize:vertical;min-height:52px;}
         <button class="btn btn-outline btn-sm" style="flex:1" onclick="loadSample()">サンプル</button>
         <button class="btn btn-sm" style="flex:1;background:transparent;color:#e05050;border:1.5px solid #e05050;border-radius:10px;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif" onclick="clearItems()">全削除</button>
       </div>
+      </details>
     </div>
     <div class="mt-12"><button class="btn btn-blue" onclick="showTab('preview')">次へ：プレビュー確認 →</button></div>
   </div>
@@ -473,6 +521,26 @@ textarea.form-input{resize:vertical;min-height:52px;}
     <div class="sub-title">自動保存から復元<strong>復元したい日時を選んでください</strong></div>
     <div id="snap-list"></div>
     <button class="sub-cancel" id="snap-close">閉じる</button>
+  </div>
+</div>
+
+<!-- タスク編集 -->
+<div class="sub-overlay" id="edit-overlay">
+  <div class="sub-box">
+    <div class="sub-title">登録内容の修正<strong id="edit-lbl"></strong></div>
+    <label class="form-label">日付</label>
+    <input type="date" class="form-input" id="ed-date">
+    <label class="form-label">コース名</label>
+    <input class="form-input" id="ed-course">
+    <label class="form-label">金額</label>
+    <input type="number" inputmode="numeric" class="form-input" id="ed-price">
+    <label class="form-label">メモ</label>
+    <input class="form-input" id="ed-memo" placeholder="備考など">
+    <div class="edit-row">
+      <button class="btn btn-outline" id="ed-del" style="color:var(--red);border-color:var(--red);">🗑 削除</button>
+      <button class="btn btn-primary" id="ed-save">保存する</button>
+    </div>
+    <button class="sub-cancel" id="ed-cancel">キャンセル</button>
   </div>
 </div>
 
@@ -534,15 +602,18 @@ const now=new Date();
 const loaded=load();
 const st={year:now.getFullYear(),month:now.getMonth()+1,price:3000,current:'',selected:[],tasks:loaded.tasks,groups:loaded.groups};
 
+const WD=['日','月','火','水','木','金','土'];
+function ymd(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function todayStr(){return ymd(new Date());}
+
 // 初期日付
-(function(){
-  const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0'),d=String(now.getDate()).padStart(2,'0');
-  document.getElementById('inp-date').value=`${y}-${m}-${d}`;
-})();
+document.getElementById('inp-date').value=todayStr();
 
 function ml(){return`${st.year}年${st.month}月`;}
 function fmtDate(s){if(!s)return'';const d=new Date(s+'T00:00:00');return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;}
-function getMonthTasks(){return st.tasks.filter(t=>{const d=new Date(t.date);return d.getFullYear()===st.year&&(d.getMonth()+1)===st.month;}).sort((a,b)=>new Date(a.date)-new Date(b.date));}
+// 指定した年月のタスク（日付順）
+function tasksFor(y,m){const p=`${y}-${String(m).padStart(2,'0')}`;return st.tasks.filter(t=>(t.date||'').slice(0,7)===p).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id-b.id);}
+function getMonthTasks(){return tasksFor(st.year,st.month);}
 
 function renderAll(){
   ['ml1','ml2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=ml();});
@@ -553,8 +624,64 @@ function renderAll(){
   document.getElementById('sc2').textContent=cnt+'件';
   document.getElementById('sa2').textContent='¥'+amt.toLocaleString();
   renderList(tasks);
+  renderDateInfo();
+  renderQuick();
+  if(typeof ivRenderMonth==='function')ivRenderMonth();
   if(typeof refreshBanner==='function')refreshBanner();
 }
+
+// 日付の曜日表示＋「この日の登録済み」（二重登録の防止）
+function renderDateInfo(){
+  const v=document.getElementById('inp-date').value;
+  const wd=document.getElementById('date-wd'),done=document.getElementById('day-done');
+  if(!v){wd.textContent='';done.classList.remove('show');return;}
+  const d=new Date(v+'T00:00:00');
+  const rel=v===todayStr()?'（今日）':'';
+  wd.innerHTML=`<b>${d.getMonth()+1}月${d.getDate()}日（${WD[d.getDay()]}）</b>${rel}`;
+  const list=st.tasks.filter(t=>t.date===v);
+  if(list.length){
+    done.innerHTML=`✅ この日はすでに${list.length}件 登録済み：<br>`+list.map(t=>`${esc(t.course)} ¥${t.price.toLocaleString()}`).join('、');
+    done.classList.add('show');
+  }else done.classList.remove('show');
+}
+// 日付を変えたら、記録タブの月もその日付の月に合わせる
+function setInpDate(v){
+  document.getElementById('inp-date').value=v;
+  if(v){const d=new Date(v+'T00:00:00');st.year=d.getFullYear();st.month=d.getMonth()+1;}
+  renderAll();
+}
+function shiftDate(n){
+  const v=document.getElementById('inp-date').value||todayStr();
+  const d=new Date(v+'T00:00:00');d.setDate(d.getDate()+n);setInpDate(ymd(d));
+}
+
+// よく使う便（直近60日の回数順・上位8）→ タップで追加リストへ直行
+function coursePrice(name){
+  if(COURSE_PRICE[name]!=null)return COURSE_PRICE[name];
+  const last=st.tasks.filter(t=>t.course===name&&!t.gaichu).sort((a,b)=>a.date<b.date?1:-1)[0];
+  return last?last.price:null;
+}
+function renderQuick(){
+  const since=new Date();since.setDate(since.getDate()-60);const s=ymd(since);
+  const cnt={};
+  st.tasks.forEach(t=>{if(!t.gaichu&&t.date>=s)cnt[t.course]=(cnt[t.course]||0)+1;});
+  const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,8);
+  document.getElementById('quick-wrap').style.display=top.length?'':'none';
+  document.getElementById('quick-grid').innerHTML=top.map(c=>{const p=coursePrice(c);
+    return`<button class="quick-chip" data-c="${esc(c)}">${esc(c)}${p!=null?`<span class="qp">¥${p.toLocaleString()}</span>`:''}</button>`;}).join('');
+}
+document.getElementById('quick-grid').addEventListener('click',function(e){
+  const b=e.target.closest('.quick-chip');if(!b)return;
+  const c=b.dataset.c,p=coursePrice(c);
+  if(p==null){selectCourse(c);toast('金額を入れてから③追加してください',true);return;}
+  st.selected.push({course:c,price:p});
+  renderSelected();
+  toast(`➕ ${c} をリストに追加`);
+});
+document.getElementById('date-prev').onclick=()=>shiftDate(-1);
+document.getElementById('date-next').onclick=()=>shiftDate(1);
+document.getElementById('date-today').onclick=()=>setInpDate(todayStr());
+document.getElementById('inp-date').addEventListener('change',function(){setInpDate(this.value);});
 
 function renderGrid(){
   const grid=document.getElementById('parent-grid');
@@ -708,39 +835,83 @@ document.getElementById('commit-btn').onclick=function(){
   const date=document.getElementById('inp-date').value;
   const memo=document.getElementById('inp-memo').value.trim();
   if(!date){toast('❌ 日付を選択してください',true);return;}
-  if(!st.selected.length){toast('❌ 「追加」でコースをリストに入れてください',true);return;}
-  st.selected.forEach((s,i)=>st.tasks.push({id:Date.now()+i,date,course:s.course,price:s.price,memo}));
+  // ①で選んだまま③を押していない便も、そのまま登録に含める
+  if(st.current){
+    if(!(st.price>0)){toast('❌ 金額を入れてください',true);return;}
+    st.selected.push({course:st.current,price:st.price});clearCurrent();
+  }
+  if(!st.selected.length){toast('❌ ①でコースを選んでください',true);return;}
+  const base=Date.now();
+  st.selected.forEach((s,i)=>st.tasks.push({id:base+i,date,course:s.course,price:s.price,memo}));
   const n=st.selected.length;
   save();
   document.getElementById('inp-memo').value='';
   clearCourse();
-  renderAll();
+  setInpDate(date);
   toast(`✅ ${n}件 一覧に登録しました！`);
 };
 
+// 一覧：日付ごとにまとめて、その日の合計も表示。タップで修正できる
 function renderList(tasks){
   const c=document.getElementById('task-list');
   if(!tasks.length){c.innerHTML='<div class="empty">📭 この月のタスクはありません</div>';return;}
-  c.innerHTML=tasks.map(t=>`<div class="task-item${t.price===4000?' p4':''}">
-    <div>
-      <div class="task-date">${fmtDate(t.date)}</div>
-      <div class="task-course">${t.course}</div>
-      ${t.memo?`<div style="font-size:10px;color:var(--muted);margin-top:1px">${t.memo}</div>`:''}
-    </div>
-    <div style="display:flex;align-items:center">
-      <span class="task-price ${t.price===3000?'c3':'c4'}">¥${t.price.toLocaleString()}</span>
-      <button class="task-del" data-id="${t.id}">×</button>
-    </div>
-  </div>`).join('');
+  const days={};
+  tasks.forEach(t=>{(days[t.date]=days[t.date]||[]).push(t);});
+  c.innerHTML='<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px">行をタップすると修正できます</div>'+
+  Object.keys(days).map(day=>{
+    const list=days[day],d=new Date(day+'T00:00:00'),w=d.getDay();
+    const sum=list.reduce((s,t)=>s+t.price,0);
+    return`<div class="day-head"><span><b>${d.getMonth()+1}/${d.getDate()}</b> <span class="${w===0?'wk-sun':w===6?'wk-sat':''}">(${WD[w]})</span></span><span>${list.length}件 ¥${sum.toLocaleString()}</span></div>`+
+    list.map(t=>`<div class="task-item${t.gaichu?' gaichu':t.price>=4000?' p4':''}" data-id="${t.id}">
+      <div>
+        <div class="task-course">${esc(t.course)}${t.gaichu?' <span style="font-size:10px;color:#7c3aed">外注費</span>':''}</div>
+        ${t.memo?`<div style="font-size:10px;color:var(--muted);margin-top:1px">${esc(t.memo)}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center">
+        <span class="task-price ${t.price===3000?'c3':'c4'}">¥${t.price.toLocaleString()}</span>
+        <button class="task-del" data-id="${t.id}">×</button>
+      </div>
+    </div>`).join('');
+  }).join('');
 }
 
-let pendingDel=null;
+let pendingDel=null,editId=null;
 document.getElementById('task-list').addEventListener('click',function(e){
   const btn=e.target.closest('.task-del');
-  if(!btn)return;
-  pendingDel=Number(btn.dataset.id);
-  document.getElementById('confirm-ov').classList.add('open');
+  if(btn){
+    pendingDel=Number(btn.dataset.id);
+    document.getElementById('confirm-ov').classList.add('open');
+    return;
+  }
+  const row=e.target.closest('.task-item');
+  if(row)openEdit(Number(row.dataset.id));
 });
+
+function openEdit(id){
+  const t=st.tasks.find(x=>x.id===id);if(!t)return;
+  editId=id;
+  document.getElementById('edit-lbl').textContent=`${fmtDate(t.date)} ${t.course}`;
+  document.getElementById('ed-date').value=t.date;
+  document.getElementById('ed-course').value=t.course;
+  document.getElementById('ed-price').value=t.price;
+  document.getElementById('ed-memo').value=t.memo||'';
+  document.getElementById('edit-overlay').classList.add('open');
+}
+function closeEdit(){editId=null;document.getElementById('edit-overlay').classList.remove('open');}
+document.getElementById('ed-save').onclick=function(){
+  const t=st.tasks.find(x=>x.id===editId);if(!t)return closeEdit();
+  const date=document.getElementById('ed-date').value,course=document.getElementById('ed-course').value.trim();
+  const price=Number(document.getElementById('ed-price').value);
+  if(!date||!course||!(price>0)){toast('❌ 日付・コース・金額を入れてください',true);return;}
+  t.date=date;t.course=course;t.price=price;t.memo=document.getElementById('ed-memo').value.trim();
+  save();closeEdit();renderAll();toast('✅ 修正しました');
+};
+document.getElementById('ed-del').onclick=function(){
+  pendingDel=editId;closeEdit();
+  document.getElementById('confirm-ov').classList.add('open');
+};
+document.getElementById('ed-cancel').onclick=closeEdit;
+document.getElementById('edit-overlay').onclick=function(e){if(e.target===this)closeEdit();};
 document.getElementById('conf-ok').onclick=function(){
   if(pendingDel){st.tasks=st.tasks.filter(t=>t.id!==pendingDel);save();renderAll();toast('🗑️ 削除しました');}
   pendingDel=null;document.getElementById('confirm-ov').classList.remove('open');
@@ -754,7 +925,12 @@ document.getElementById('tabs').addEventListener('click',function(e){
   ['record','list','invoice'].forEach(name=>{
     document.getElementById('page-'+name).classList.toggle('active',tab.dataset.tab===name);
   });
-  if(tab.dataset.tab==='invoice')ivSetInvoiceMeta();
+  if(tab.dataset.tab==='invoice'){
+    ivSetInvoiceMeta();
+    // 記録から集計中なら、開くたびに最新の記録で集計し直す
+    if(ivSource==='records')importRecords();
+    renderPreview();
+  }
   renderAll();
 });
 
@@ -765,6 +941,8 @@ document.querySelectorAll('.month-btn').forEach(btn=>btn.addEventListener('click
   if(st.month<1){st.month=12;st.year--;}
   renderAll();
 }));
+// 月の表示をタップ → 今月に戻る
+['ml1','ml2'].forEach(id=>{const el=document.getElementById(id);el.classList.add('jump');el.title='タップで今月へ';el.onclick=()=>{const n=new Date();st.year=n.getFullYear();st.month=n.getMonth()+1;renderAll();};});
 
 document.querySelectorAll('.price-btn').forEach(btn=>btn.addEventListener('click',function(){
   st.price=Number(this.dataset.price);
@@ -812,12 +990,48 @@ document.getElementById('imp-input').addEventListener('change',function(e){
 const CLIENT_PRESETS={shindo:{name:'進藤運輸倉庫有限会社',address:'福岡県福岡市博多区諸岡3丁目24番1号'}};
 let items=[];
 
-// 請求対象の月（記録タブで選んでいる st.year/st.month）から番号・日付を自動決定
+// 請求対象の月は請求書タブ専用（記録タブの月とは別）。最初は「先月分」
+let ivY=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();
+let ivM=now.getMonth()===0?12:now.getMonth();
+// 品目の出どころ：'records'＝記録から自動集計（月を変えると自動で入れ替え）／'manual'＝手で追加・修正した
+let ivSource='records';
+
+function ivRenderMonth(){
+  const tasks=tasksFor(ivY,ivM),amt=tasks.reduce((s,t)=>s+t.price,0);
+  document.getElementById('ivMonthLabel').textContent=`${ivY}年${ivM}月分`;
+  document.getElementById('ivMonthSub').textContent=`記録 ${tasks.length}件 ¥${amt.toLocaleString()}`;
+  document.getElementById('ivReloadBtn').textContent=`🔄 記録から取り込み直す（${ivM}月分）`;
+  const note=document.getElementById('ivSrcNote');
+  if(note)note.textContent=ivSource==='records'
+    ?`📥 「記録」の${ivM}月分を自動で集計しています。月を変えると自動で入れ替わります。`
+    :`✏️ 手で追加・修正した品目です（月を変えたときは取り込み直すか確認します）。`;
+}
+function ivChangeMonth(d){
+  ivM+=d;
+  if(ivM>12){ivM=1;ivY++;}
+  if(ivM<1){ivM=12;ivY--;}
+  ivSetInvoiceMeta();
+  if(ivSource==='records'||!items.length||confirm(`品目を「記録」の${ivY}年${ivM}月分に入れ替えますか？\n（キャンセルで今の品目のまま）`))importRecords();
+  ivRenderMonth();
+  renderPreview();
+}
+// 記録→品目（確認なし）
+function importRecords(){
+  const map={};
+  tasksFor(ivY,ivM).forEach(t=>{const k=t.course+'|'+t.price;if(!map[k])map[k]={name:t.course,unit_price:t.price,qty:0,amount:0};map[k].qty++;map[k].amount+=t.price;});
+  items=Object.values(map);
+  ivSource='records';
+  renderItems();
+}
+// 品目を手で触ったら manual に
+function ivMarkManual(){ivSource='manual';ivRenderMonth();}
+
+// 請求対象の月（請求書タブの ivY/ivM）から番号・日付を自動決定
 //  ・請求書番号 = 対象月の締め日(末日) YYYYMMDD 例:20260630
 //  ・請求日     = 翌月1日            例:2026-07-01
 //  ・お支払期限 = 翌月末日           例:2026-07-31
 function ivInvoiceMeta(){
-  const by=st.year,bm=st.month;
+  const by=ivY,bm=ivM;
   const lastB=new Date(by,bm,0).getDate();
   const num=`${by}${String(bm).padStart(2,'0')}${String(lastB).padStart(2,'0')}`;
   const ny=bm===12?by+1:by, nm=bm===12?1:bm+1;
@@ -901,10 +1115,11 @@ function addItem(){
   document.getElementById('priceBadge').style.display='none';
   document.getElementById('addForm').classList.remove('highlight');
   renderItems();
+  ivMarkManual();
 }
 
-function removeItem(i){items.splice(i,1);renderItems();}
-function clearItems(){if(items.length&&!confirm('全品目を削除しますか？'))return;items=[];renderItems();}
+function removeItem(i){items.splice(i,1);renderItems();ivMarkManual();}
+function clearItems(){if(items.length&&!confirm('全品目を削除しますか？'))return;items=[];renderItems();ivMarkManual();}
 
 function renderItems(){
   document.getElementById('itemsList').innerHTML=items.map((it,i)=>
@@ -916,15 +1131,13 @@ function renderItems(){
 function updateTotal(){document.getElementById('totalDisplay').textContent='¥'+items.reduce((s,i)=>s+i.amount,0).toLocaleString();}
 
 function loadFromRecords(){
-  const tasks=getMonthTasks();
-  if(!tasks.length){alert('「記録」タブの今月（'+ml()+'）にデータがありません。\n月を切り替えてから取り込んでください。');return;}
-  if(items.length&&!confirm('現在の品目を「記録」タブの今月分で置き換えますか？'))return;
-  const map={};
-  tasks.forEach(t=>{const k=t.course+'|'+t.price;if(!map[k])map[k]={name:t.course,unit_price:t.price,qty:0,amount:0};map[k].qty++;map[k].amount+=t.price;});
-  items=Object.values(map);
+  const label=`${ivY}年${ivM}月`;
+  if(!tasksFor(ivY,ivM).length){alert(`「記録」の${label}にデータがありません。\n上の ‹ › で月を切り替えてください。`);return;}
+  if(ivSource==='manual'&&items.length&&!confirm(`手で直した品目を「記録」の${label}分で置き換えますか？`))return;
   ivSetInvoiceMeta();
-  renderItems();
-  alert('今月（'+ml()+'）の記録を取り込みました！\n合計: ¥'+items.reduce((s,i)=>s+i.amount,0).toLocaleString());
+  importRecords();
+  ivRenderMonth();
+  toast(`✅ ${label}分を取り込みました（¥${items.reduce((s,i)=>s+i.amount,0).toLocaleString()}）`);
 }
 
 function loadPreset(label,num,iDate,dDate,data){
@@ -932,7 +1145,7 @@ function loadPreset(label,num,iDate,dDate,data){
   document.getElementById('invoiceNumber').value=num;
   document.getElementById('invoiceDate').value=iDate;
   document.getElementById('dueDate').value=dDate;
-  items=data;renderItems();
+  items=data;renderItems();ivMarkManual();
   alert(`${label}データを読み込みました！\n合計: ¥${items.reduce((s,i)=>s+i.amount,0).toLocaleString()}`);
 }
 function loadJanuary(){loadPreset('1月分','20260131','2026-02-01','2026-02-28',[
@@ -966,18 +1179,21 @@ function loadSample(){
   items=[{name:'博多南下6上3',unit_price:3000,qty:14,amount:42000},{name:'福岡下9上6',unit_price:3000,qty:10,amount:30000},
     {name:'和白下1補助',unit_price:4000,qty:5,amount:20000},{name:'福岡西下4上4',unit_price:4000,qty:5,amount:20000},
     {name:'博多南下7上4',unit_price:3000,qty:8,amount:24000},{name:'直方補助下1上1',unit_price:3000,qty:5,amount:15000}];
-  renderItems();
+  renderItems();ivMarkManual();
 }
 
 const IVKEY='invoiceAppData';
 function saveData(){
-  try{localStorage.setItem(IVKEY,JSON.stringify({fields:getD(),items,savedAt:new Date().toISOString()}));showSavedMsg('保存しました ✓');}
+  try{localStorage.setItem(IVKEY,JSON.stringify({fields:getD(),items,source:ivSource,ivY,ivM,savedAt:new Date().toISOString()}));showSavedMsg('保存しました ✓');}
   catch(e){showSavedMsg('保存に失敗しました');}
 }
 function loadInvoiceData(){
   try{const raw=localStorage.getItem(IVKEY);if(!raw)return;const state=JSON.parse(raw);
     if(state.fields)Object.keys(state.fields).forEach(k=>{const el=document.getElementById(k);if(el)el.value=state.fields[k];});
-    if(Array.isArray(state.items))items=state.items;
+    // 手で直した請求書を保存していて、それが先月分以降なら復元。それ以外は記録から自動集計
+    if(state.source==='manual'&&Array.isArray(state.items)&&state.ivY&&(state.ivY*12+state.ivM)>=(ivY*12+ivM)){
+      items=state.items;ivSource='manual';ivY=state.ivY;ivM=state.ivM;
+    }
   }catch(e){}
 }
 function showSavedMsg(msg){const el=document.getElementById('savedMsg');if(!el)return;el.textContent=msg;el.style.opacity='1';setTimeout(()=>{el.style.opacity='0';},2500);}
@@ -1108,7 +1324,7 @@ function doPrint(){
 
 loadInvoiceData();
 ivSetInvoiceMeta();
-renderItems();
+if(ivSource==='records')importRecords();else renderItems();
 
 function toast(msg,isErr){
   const t=document.getElementById('toast');
