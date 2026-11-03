@@ -223,7 +223,7 @@ details.past summary{cursor:pointer;font-size:12px;font-weight:700;color:#1A7FC4
 <body>
 
 <div class="app-header">
-  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.5</span></div>
+  <div class="app-title" style="display:flex;justify-content:space-between;align-items:center;">副業管理アプリ<span style="letter-spacing:1px;opacity:.7;">v1.6</span></div>
   <div class="tabs" id="tabs">
     <div class="tab active" data-tab="record">📋 記録</div>
     <div class="tab" data-tab="list">📊 一覧</div>
@@ -477,19 +477,32 @@ details.past summary{cursor:pointer;font-size:12px;font-weight:700;color:#1A7FC4
     <div class="mt-12"><button class="btn btn-blue" onclick="printInvoice()">🖨 印刷 / PDF保存</button></div>
     <div class="mt-8"><button class="btn btn-primary btn-sm" style="width:100%" onclick="saveData()">💾 請求書データを保存</button></div>
     <div class="saved-msg" id="savedMsg"></div>
-    <p class="text-sm text-center mt-8">Safari → 共有ボタン →「PDFを作成」でiPhone保存可</p>
+    <p class="text-sm text-center mt-8">iPhoneは、PDFにしてから「ファイルに保存」や「プリント」ができます</p>
   </div>
 
   <!-- 印刷前モーダル -->
   <div class="pm-overlay" id="pmOverlay">
     <div class="pm-box">
+      <!-- iPhone/iPad：PDFを作って共有メニュー（プリント・ファイルに保存）へ -->
+      <div id="pmIos" style="display:none">
+        <div class="pm-title">📄 請求書をPDFにします</div>
+        <div class="pm-step"><strong>① PDFを作る</strong>下の青いボタンを押してください（数秒かかります）</div>
+        <div class="pm-step"><strong>② 保存・印刷する</strong>出てきたメニューで<br>「ファイルに保存」→ 保存<br>「プリント」→ 印刷</div>
+        <div id="pdfStatus" style="font-size:12px;color:#3A3A4A;text-align:center;min-height:18px;margin-top:6px"></div>
+        <div class="pm-btns">
+          <button class="btn btn-outline btn-sm" onclick="closePrintModal()" style="flex:1">閉じる</button>
+          <button class="btn btn-blue btn-sm" id="pdfBtn" onclick="pdfAction()" style="flex:2">① PDFを作る</button>
+        </div>
+      </div>
+      <div id="pmPc">
       <div class="pm-title">🖨 印刷前の設定確認</div>
-      <div class="pm-step"><strong>📱 iPhone Safari</strong>そのままOKです。ヘッダー・フッターは表示されません。</div>
       <div class="pm-step"><strong>🖥 Mac Safari</strong>印刷ダイアログが開いたら<br>「ヘッダーとフッターを印刷」の<br>☑ チェックを外してください</div>
       <div class="pm-step"><strong>🌐 Chrome / Edge</strong>「詳細設定」→「ヘッダーとフッター」の<br>☑ チェックを外してください</div>
       <div class="pm-btns">
         <button class="btn btn-outline btn-sm" onclick="closePrintModal()" style="flex:1">キャンセル</button>
         <button class="btn btn-blue btn-sm" onclick="doPrint()" style="flex:2">印刷する →</button>
+      </div>
+      <button onclick="pmShow(true)" style="margin-top:12px;background:none;border:none;color:#1A7FC4;font-size:12px;text-decoration:underline;cursor:pointer;width:100%;font-family:inherit">PDFファイルとして保存する場合はこちら</button>
       </div>
     </div>
   </div>
@@ -1348,11 +1361,62 @@ function buildInvoiceHTML(){
 </div>`;
 }
 
+// iPhone/iPad はホーム画面アプリだと window.print() が効かないので、PDFを作って共有メニューへ
+const IS_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function pmShow(ios){
+  document.getElementById('pmIos').style.display=ios?'':'none';
+  document.getElementById('pmPc').style.display=ios?'none':'';
+  pdfFile=null;
+  document.getElementById('pdfBtn').textContent='① PDFを作る';
+  document.getElementById('pdfStatus').textContent='';
+}
 function printInvoice(){
   const d=getD();
   document.getElementById('printArea').innerHTML=buildInvoiceHTML();
   document.title='請求書_'+(d.invoiceNumber||'');
+  pmShow(IS_IOS);
   document.getElementById('pmOverlay').classList.add('show');
+}
+
+// ---- PDF作成（html2canvas で画像化 → jsPDF でA4に貼る）----
+let pdfFile=null,pdfBusy=false;
+function loadScript(src){return new Promise((ok,ng)=>{if(document.querySelector(`script[src="${src}"]`))return ok();const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=ng;document.head.appendChild(s);});}
+async function buildPdf(){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  // A4(210mm)を幅794pxとして、画面外で請求書を組み立てる（余白12mm≒45px）
+  const box=document.createElement('div');
+  box.style.cssText='position:fixed;left:-10000px;top:0;width:794px;min-height:1123px;padding:45px 45px 57px;box-sizing:border-box;background:#fff;';
+  box.innerHTML=buildInvoiceHTML().replace(/position:fixed;bottom:0;/,'position:absolute;bottom:0;').replace(/position:fixed;bottom:3px;/,'position:absolute;bottom:3px;');
+  document.body.appendChild(box);
+  try{
+    const canvas=await html2canvas(box,{scale:2,backgroundColor:'#fff',useCORS:true});
+    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
+    // 品目が多くて縦に長いときは1ページに収まるよう縮小
+    let w=210,h=canvas.height*210/canvas.width;
+    if(h>297){w=w*297/h;h=297;}
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',(210-w)/2,0,w,h);
+    const name='請求書_'+(getD().invoiceNumber||'')+'.pdf';
+    return new File([pdf.output('blob')],name,{type:'application/pdf'});
+  }finally{box.remove();}
+}
+async function pdfAction(){
+  const st2=document.getElementById('pdfStatus'),btn=document.getElementById('pdfBtn');
+  if(pdfBusy)return;
+  if(!pdfFile){
+    pdfBusy=true;btn.textContent='作成中…';st2.textContent='PDFを作っています。少しお待ちください';
+    try{pdfFile=await buildPdf();btn.textContent='② 保存・印刷する';st2.textContent='✅ できました！「② 保存・印刷する」を押してください';}
+    catch(e){btn.textContent='① PDFを作る';st2.textContent='❌ 作れませんでした。電波の良い所でもう一度お試しください';}
+    pdfBusy=false;return;
+  }
+  // ② 共有メニュー（ファイルに保存・プリント）。使えない時はPDFを開く
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[pdfFile]})){await navigator.share({files:[pdfFile],title:pdfFile.name});return;}
+  }catch(e){if(e&&e.name==='AbortError')return;}
+  const url=URL.createObjectURL(pdfFile);
+  const a=document.createElement('a');a.href=url;a.download=pdfFile.name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  st2.textContent='PDFを開きました。共有ボタン（□↑）から保存・プリントできます';
 }
 function closePrintModal(){document.getElementById('pmOverlay').classList.remove('show');document.getElementById('printArea').innerHTML='';document.title='副業管理アプリ';}
 function doPrint(){
